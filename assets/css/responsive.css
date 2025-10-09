@@ -1,0 +1,271 @@
+/* Styles responsive personnalisés */
+
+/* Améliorations pour les petits écrans */
+@media (max-width: 640px) {
+    /* Ajustements du texte */
+    .text-responsive {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+    
+    /* Espacement réduit sur mobile */
+    .mobile-padding {
+        padding: 1rem;
+    }
+    
+    /* Boutons plus grands sur mobile */
+    .mobile-button {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        min-height: 44px; /* Taille minimale pour le touch */
+    }
+    
+    /* Cartes plus compactes */
+    .mobile-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Grille adaptative */
+    .mobile-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    /* Navigation mobile améliorée */
+    .mobile-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Masquer les éléments non essentiels sur mobile */
+    .mobile-hide {
+        display: none !important;
+    }
+    
+    /* Afficher les éléments essentiels sur mobile */
+    .mobile-show {
+        display: block !important;
+    }
+}
+
+/* Améliorations pour les tablettes */
+@media (min-width: 641px) and (max-width: 1024px) {
+    /* Grille 2 colonnes sur tablette */
+    .tablet-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    /* Espacement intermédiaire */
+    .tablet-padding {
+        padding: 1.5rem;
+    }
+    
+    /* Texte de taille moyenne */
+    .tablet-text {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+}
+
+/* Améliorations pour les grands écrans */
+@media (min-width: 1025px) {
+    /* Grille 3-4 colonnes sur desktop */
+    .desktop-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+    
+    /* Espacement généreux */
+    .desktop-padding {
+        padding: 2rem;
+    }
+    
+    /* Texte plus grand */
+    .desktop-text {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+}
+
+/* Animations pour le menu mobile */
+.mobile-menu {
+    transition: all 0.3s ease-in-out;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mobile-menu.hidden {
+    display: none !important;
+}
+
+/* Styles spécifiques pour le bouton mobile */
+.mobile-menu-button {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.mobile-menu-button:hover {
+    transform: scale(1.05);
+}
+
+.mobile-menu-button:active {
+    transform: scale(0.95);
+}
+
+/* Styles pour le bouton de déconnexion */
+.logout-button {
+    transition: all 0.2s ease-in-out;
+}
+
+.logout-button:hover {
+    background-color: #fef2f2;
+    transform: translateX(2px);
+}
+
+.logout-button:active {
+    transform: translateX(1px);
+}
+
+/* Améliorations des cartes */
+.card-hover {
+    transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Boutons avec états de focus améliorés */
+.btn-focus {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-focus:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #3b82f6;
+    ring-offset: 2px;
+}
+
+/* Améliorations de l'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Mode sombre (optionnel) */
+@media (prefers-color-scheme: dark) {
+    .dark-mode-support {
+        background-color: #1f2937;
+        color: #f9fafb;
+    }
+}
+
+/* Améliorations pour les écrans haute densité */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .high-dpi {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Styles pour les formulaires responsive */
+.form-responsive {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .form-responsive {
+        flex-direction: row;
+        align-items: end;
+    }
+}
+
+/* Améliorations pour les tableaux */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    min-width: 600px;
+}
+
+/* Styles pour les modales responsive */
+.modal-responsive {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .modal-content {
+        max-width: 600px;
+        padding: 2rem;
+    }
+}
+
+/* Améliorations pour les tooltips */
+.tooltip-responsive {
+    position: relative;
+}
+
+.tooltip-responsive:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #374151;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+@media (max-width: 640px) {
+    .tooltip-responsive:hover::after {
+        display: none;
+    }
+}

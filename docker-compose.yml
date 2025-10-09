@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: plateforme_educative_db
+    environment:
+      POSTGRES_DB: plateforme_educative
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - plateforme_network
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: plateforme_educative_backend
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/plateforme_educative
+      - DATABASE_URL_ASYNC=postgresql+asyncpg://user:password@postgres:5432/plateforme_educative
+      - SECRET_KEY=your-secret-key-change-in-production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgres
+    networks:
+      - plateforme_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: plateforme_educative_frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - plateforme_network
+    command: npm start
+
+  # Jupyter Notebook (optionnel)
+  jupyter:
+    image: jupyter/notebook:latest
+    container_name: plateforme_educative_jupyter
+    environment:
+      - JUPYTER_TOKEN=your-jupyter-token
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    networks:
+      - plateforme_network
+    profiles:
+      - jupyter
+
+volumes:
+  postgres_data:
+
+networks:
+  plateforme_network:
+    driver: bridge
