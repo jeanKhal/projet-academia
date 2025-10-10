@@ -306,7 +306,7 @@ $enrolledCourses = getEnrolledCourses($user['id']);
                                     <div class="bg-purple-600 h-2 rounded-full" style="width: <?php echo $progress['progress_percentage']; ?>%"></div>
                                 </div>
                                 <div class="flex items-center justify-between text-sm text-gray-500">
-                                    <span><?php echo $progress['resources_completed']; ?> / <?php echo $progress['total_resources']; ?> ressources</span>
+                                    <span><?php echo isset($progress['resources_completed']) ? (int)$progress['resources_completed'] : 0; ?> / <?php echo isset($progress['total_resources']) ? (int)$progress['total_resources'] : 0; ?> ressources</span>
                                     <a href="certification.php?id=<?php echo $progress['certification_path_id']; ?>" class="text-purple-600 hover:text-purple-800 font-medium">
                                         Continuer →
                                     </a>

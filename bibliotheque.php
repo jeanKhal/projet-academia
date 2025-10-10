@@ -251,6 +251,68 @@ $themeMap = [
 
 $themeCounts = getThemeCountsByMapping($themeMap);
 
+// Intégrer les couvertures du dossier 'livres' dans les comptages de thèmes et facultés
+$coversDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres';
+$coverCategoryCounts = [];
+if (is_dir($coversDir)) {
+    // Compter les images à la racine de 'livres' (classées sous 'autres')
+    $rootCount = 0;
+    foreach (scandir($coversDir) as $entry) {
+        if ($entry === '.' || $entry === '..') { continue; }
+        $fullPath = $coversDir . DIRECTORY_SEPARATOR . $entry;
+        if (is_file($fullPath)) {
+            $ext = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                $rootCount++;
+            }
+        }
+    }
+    if ($rootCount > 0) {
+        $coverCategoryCounts['autres'] = ($coverCategoryCounts['autres'] ?? 0) + $rootCount;
+    }
+    // Compter les images par sous-dossier (le nom du dossier = catégorie)
+    foreach (scandir($coversDir) as $dir) {
+        if ($dir === '.' || $dir === '..') { continue; }
+        $subPath = $coversDir . DIRECTORY_SEPARATOR . $dir;
+        if (is_dir($subPath)) {
+            $count = 0;
+            foreach (scandir($subPath) as $file) {
+                if ($file === '.' || $file === '..') { continue; }
+                $full = $subPath . DIRECTORY_SEPARATOR . $file;
+                if (is_file($full)) {
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                        $count++;
+                    }
+                }
+            }
+            if ($count > 0) {
+                $categoryKey = strtolower(trim(preg_replace('/\s+/', '-', (string)$dir)));
+                $coverCategoryCounts[$categoryKey] = ($coverCategoryCounts[$categoryKey] ?? 0) + $count;
+            }
+        }
+    }
+}
+
+// Ajouter ces comptes aux facultés
+if (!empty($coverCategoryCounts)) {
+    foreach ($coverCategoryCounts as $categoryKey => $count) {
+        $faculty = mapCategoryToFaculty($categoryKey);
+        $facultyCounts[$faculty] = ($facultyCounts[$faculty] ?? 0) + (int)$count;
+    }
+}
+
+// Ajouter ces comptes aux thèmes
+if (!empty($coverCategoryCounts)) {
+    foreach ($coverCategoryCounts as $categoryKey => $count) {
+        foreach ($themeMap as $themeKey => $categories) {
+            if (in_array($categoryKey, array_map('strtolower', $categories), true)) {
+                $themeCounts[$themeKey] = ($themeCounts[$themeKey] ?? 0) + (int)$count;
+            }
+        }
+    }
+}
+
 // Type sélectionné pour la liste complète
 $selectedType = isset($_GET['atype']) && in_array($_GET['atype'], $academicTypes, true)
     ? $_GET['atype']
@@ -306,6 +368,21 @@ function getAllBooksByType($type, $limit = 24, $keyword = '') {
 }
 
 $allBooks = getAllBooksByType($selectedType, 24, $keyword);
+
+// Images depuis le dossier 'livres'
+$bookImageDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres';
+$bookImageWebBase = 'livres';
+$bookImages = [];
+if (is_dir($bookImageDir)) {
+    foreach (scandir($bookImageDir) as $file) {
+        if ($file === '.' || $file === '..') { continue; }
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+            $bookImages[] = $file;
+        }
+    }
+    sort($bookImages);
+}
 ?>
 
 <!DOCTYPE html>
@@ -348,7 +425,7 @@ $allBooks = getAllBooksByType($selectedType, 24, $keyword);
                 <div class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
                     <i class="fas fa-user-graduate text-white text-lg"></i>
                 </div>
-                <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo htmlspecialchars($user['full_name']); ?></h3>
+                <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo ($isLoggedIn && !empty($user['full_name'])) ? htmlspecialchars($user['full_name']) : 'Invité'; ?></h3>
                 <p class="text-xs text-gray-500">Étudiant IA</p>
                 <div class="mt-1">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
@@ -619,29 +696,22 @@ $allBooks = getAllBooksByType($selectedType, 24, $keyword);
                             <i class="fas fa-list mr-2 text-gray-700"></i>
                             Tous les <?php echo htmlspecialchars($selectedTypeLabel); ?>s
                         </h2>
-                        <span class="text-xs text-gray-500">(<?php echo count($allBooks); ?> éléments)</span>
+                        <span class="text-xs text-gray-500">(<?php echo count($bookImages); ?> éléments)</span>
                     </div>
                 </div>
                 <div class="p-4 sm:p-6">
-                    <?php if (empty($allBooks)): ?>
-                        <p class="text-sm text-gray-600">Aucun élément de type « <?php echo htmlspecialchars($selectedTypeLabel); ?> » n'est disponible pour le moment.</p>
-                    <?php else: ?>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <?php foreach ($allBooks as $book): ?>
-                            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-br from-white to-gray-50 hover:shadow-md transition-shadow">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-100"><?php echo htmlspecialchars($selectedTypeLabel); ?></span>
-                                    <span class="text-xs text-gray-500"><?php echo date('d/m/Y', strtotime($book['upload_date'])); ?></span>
-                                </div>
-                                <h3 class="font-semibold text-gray-900 text-sm mb-1 truncate"><?php echo htmlspecialchars($book['title']); ?></h3>
-                                <p class="text-xs text-gray-600 line-clamp-2 mb-3"><?php echo htmlspecialchars(mb_substr($book['description'], 0, 120)) . '...'; ?></p>
-                                <div class="flex items-center justify-between text-xs text-gray-500">
-                                    <span><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($book['author'] ?? 'Inconnu'); ?></span>
-                                    <span><i class="fas fa-eye mr-1"></i><?php echo (int)($book['view_count'] ?? 0); ?> vues</span>
-                                </div>
+                    <?php if (!empty($bookImages)): ?>
+                        <div class="mb-6">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <?php foreach ($bookImages as $img): ?>
+                                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
+                                        <img src="<?php echo htmlspecialchars($bookImageWebBase . '/' . $img); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
-                            <?php endforeach; ?>
                         </div>
+                    <?php else: ?>
+                        <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres ».</p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -656,7 +726,7 @@ $allBooks = getAllBooksByType($selectedType, 24, $keyword);
         <div class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg">
             <div class="p-4">
                 
-                    <h3 class="font-semibold text-gray-900 text-sm"><?php echo htmlspecialchars($user['full_name']); ?></h3>
+                    <h3 class="font-semibold text-gray-900 text-sm"><?php echo ($isLoggedIn && !empty($user['full_name'])) ? htmlspecialchars($user['full_name']) : 'Invité'; ?></h3>
                     <p class="text-xs text-gray-600">Étudiant IA</p>
                     <div class="mt-2">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
