@@ -1,21 +1,85 @@
-[2024-08-31 19:45:23] INFO: Système démarré avec succès
-[2024-08-31 19:45:24] INFO: Connexion à la base de données établie
-[2024-08-31 19:45:25] INFO: Session utilisateur démarrée pour admin@academy.com
-[2024-08-31 19:46:12] INFO: Nouveau cours créé: "Introduction aux Systèmes Embarqués"
-[2024-08-31 19:46:45] INFO: Utilisateur student@academy.com s'est inscrit au cours "Machine Learning Avancé"
-[2024-08-31 19:47:23] WARNING: Tentative de connexion échouée pour unknown@academy.com
-[2024-08-31 19:47:45] INFO: Ressource "Guide TensorFlow" téléchargée par student@academy.com
-[2024-08-31 19:48:12] INFO: Nouveau post forum créé par teacher@academy.com
-[2024-08-31 19:48:34] INFO: Paramètres système mis à jour par admin@academy.com
-[2024-08-31 19:49:01] INFO: Cache système vidé par admin@academy.com
-[2024-08-31 19:49:15] ERROR: Erreur lors de l'envoi d'email à student@academy.com
-[2024-08-31 19:49:30] INFO: Sauvegarde automatique de la base de données effectuée
-[2024-08-31 19:50:00] INFO: Tâche de maintenance quotidienne terminée
-[2024-08-31 19:50:23] INFO: Utilisateur admin@academy.com a consulté les logs système
-[2024-08-31 19:51:12] INFO: Nouvelle certification "Expert IA" créée
-[2024-08-31 19:51:45] INFO: Utilisateur teacher@academy.com a mis à jour son profil
-[2024-08-31 19:52:10] INFO: Système de notifications activé
-[2024-08-31 19:52:34] INFO: Synchronisation des données terminée
-[2024-08-31 19:53:00] INFO: Vérification de sécurité effectuée - Aucune menace détectée
-[2024-08-31 19:53:25] INFO: Mise à jour des statistiques utilisateur terminée
-[2024-08-31 19:54:00] INFO: Nettoyage des sessions expirées effectué
+[2025-01-27 10:30:15] INFO: Application démarrée
+[2025-01-27 10:30:16] INFO: Connexion à la base de données réussie
+[2025-01-27 10:30:17] INFO: Session utilisateur initialisée
+[2025-01-27 10:31:22] INFO: Utilisateur admin connecté (ID: 1)
+[2025-01-27 10:31:25] INFO: Accès à l'interface admin autorisé
+[2025-01-27 10:32:10] INFO: Paramètres généraux mis à jour
+[2025-01-27 10:32:15] INFO: Configuration email sauvegardée
+[2025-01-27 10:33:05] WARNING: Tentative de connexion échouée pour IP: 192.168.1.100
+[2025-01-27 10:33:10] ERROR: Échec de connexion - mot de passe incorrect
+[2025-01-27 10:34:22] INFO: Cache vidé avec succès
+[2025-01-27 10:35:15] INFO: Logs système consultés par l'administrateur[2025-10-15 02:19:36] INFO: Connexion réussie | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":1,"user_name":"Admin Test","success":true}
+[2025-10-15 02:19:36] INFO: Connexion réussie | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":2,"user_name":"Utilisateur Test","success":true}
+[2025-10-15 02:19:36] INFO: Tentative de connexion échouée | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":0,"user_name":"Unknown","success":false}
+[2025-10-15 02:19:36] INFO: Activité utilisateur: Accès au dashboard | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Acc\u00e8s au dashboard","details":[]}
+[2025-10-15 02:19:36] INFO: Activité utilisateur: Consultation des paramètres | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Consultation des param\u00e8tres","details":[]}
+[2025-10-15 02:19:36] INFO: Activité utilisateur: Accès à la médiathèque | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":2,"user_name":"Utilisateur Test","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 02:19:36] INFO: Activité utilisateur: Lecture de vidéo: Introduction à l'IA | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":2,"user_name":"Utilisateur Test","activity":"Lecture de vid\u00e9o: Introduction \u00e0 l'IA","details":[]}
+[2025-10-15 02:19:36] INFO: Action admin: Modification des paramètres système | User: Guest (guest) | IP: unknown | {"action":"admin_action","admin_id":1,"admin_name":"Admin Test","admin_action":"Modification des param\u00e8tres syst\u00e8me","target":null}
+[2025-10-15 02:19:36] INFO: Action admin: Suppression d'un utilisateur | User: Guest (guest) | IP: unknown | {"action":"admin_action","admin_id":1,"admin_name":"Admin Test","admin_action":"Suppression d'un utilisateur","target":"user_id: 3"}
+[2025-10-15 02:19:36] INFO: Action admin: Validation d'un post forum | User: Guest (guest) | IP: unknown | {"action":"admin_action","admin_id":1,"admin_name":"Admin Test","admin_action":"Validation d'un post forum","target":"post_id: 15"}
+[2025-10-15 02:19:37] WARNING: Événement de sécurité: Tentative de connexion avec compte désactivé | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Tentative de connexion avec compte d\u00e9sactiv\u00e9","details":{"email":"banned@test.com"}}
+[2025-10-15 02:19:37] WARNING: Événement de sécurité: Tentative d'accès non autorisé | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Tentative d'acc\u00e8s non autoris\u00e9","details":{"page":"admin\/settings.php","user_id":2}}
+[2025-10-15 02:19:37] WARNING: Événement de sécurité: Tentative de connexion avec mot de passe incorrect | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Tentative de connexion avec mot de passe incorrect","details":{"email":"test@example.com"}}
+[2025-10-15 02:19:37] INFO: Événement système: Mise à jour de la base de données | User: Guest (guest) | IP: unknown | {"action":"system_event","event":"Mise \u00e0 jour de la base de donn\u00e9es","details":{"version":"1.2.0"}}
+[2025-10-15 02:19:37] INFO: Événement système: Nettoyage du cache | User: Guest (guest) | IP: unknown | {"action":"system_event","event":"Nettoyage du cache","details":{"files_removed":15}}
+[2025-10-15 02:19:37] INFO: Événement système: Sauvegarde automatique | User: Guest (guest) | IP: unknown | {"action":"system_event","event":"Sauvegarde automatique","details":{"backup_size":"2.5MB"}}
+[2025-10-15 02:19:37] INFO: Information générale | User: Guest (guest) | IP: unknown | {"module":"test"}
+[2025-10-15 02:19:37] WARNING: Avertissement système | User: Guest (guest) | IP: unknown | {"module":"test","issue":"M\u00e9moire faible"}
+[2025-10-15 02:19:38] ERROR: Erreur critique | User: Guest (guest) | IP: unknown | {"module":"test","error_code":"DB_CONNECTION_FAILED"}
+[2025-10-15 02:19:38] DEBUG: Message de débogage | User: Guest (guest) | IP: unknown | {"module":"test","debug_info":"Variable x = 42"}
+[2025-10-15 02:19:45] INFO: Connexion réussie | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":1,"user_name":"Admin Test","success":true}
+[2025-10-15 02:19:45] INFO: Connexion réussie | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":2,"user_name":"Utilisateur Test","success":true}
+[2025-10-15 02:19:45] INFO: Tentative de connexion échouée | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":0,"user_name":"Unknown","success":false}
+[2025-10-15 02:19:45] INFO: Activité utilisateur: Accès au dashboard | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Acc\u00e8s au dashboard","details":[]}
+[2025-10-15 02:19:45] INFO: Activité utilisateur: Consultation des paramètres | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Consultation des param\u00e8tres","details":[]}
+[2025-10-15 02:19:45] INFO: Activité utilisateur: Accès à la médiathèque | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":2,"user_name":"Utilisateur Test","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 02:19:45] INFO: Activité utilisateur: Lecture de vidéo: Introduction à l'IA | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":2,"user_name":"Utilisateur Test","activity":"Lecture de vid\u00e9o: Introduction \u00e0 l'IA","details":[]}
+[2025-10-15 02:19:45] INFO: Action admin: Modification des paramètres système | User: Guest (guest) | IP: unknown | {"action":"admin_action","admin_id":1,"admin_name":"Admin Test","admin_action":"Modification des param\u00e8tres syst\u00e8me","target":null}
+[2025-10-15 02:19:45] INFO: Action admin: Suppression d'un utilisateur | User: Guest (guest) | IP: unknown | {"action":"admin_action","admin_id":1,"admin_name":"Admin Test","admin_action":"Suppression d'un utilisateur","target":"user_id: 3"}
+[2025-10-15 02:19:45] INFO: Action admin: Validation d'un post forum | User: Guest (guest) | IP: unknown | {"action":"admin_action","admin_id":1,"admin_name":"Admin Test","admin_action":"Validation d'un post forum","target":"post_id: 15"}
+[2025-10-15 02:19:45] WARNING: Événement de sécurité: Tentative de connexion avec compte désactivé | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Tentative de connexion avec compte d\u00e9sactiv\u00e9","details":{"email":"banned@test.com"}}
+[2025-10-15 02:19:45] WARNING: Événement de sécurité: Tentative d'accès non autorisé | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Tentative d'acc\u00e8s non autoris\u00e9","details":{"page":"admin\/settings.php","user_id":2}}
+[2025-10-15 02:19:45] WARNING: Événement de sécurité: Tentative de connexion avec mot de passe incorrect | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Tentative de connexion avec mot de passe incorrect","details":{"email":"test@example.com"}}
+[2025-10-15 02:19:45] INFO: Événement système: Mise à jour de la base de données | User: Guest (guest) | IP: unknown | {"action":"system_event","event":"Mise \u00e0 jour de la base de donn\u00e9es","details":{"version":"1.2.0"}}
+[2025-10-15 02:19:45] INFO: Événement système: Nettoyage du cache | User: Guest (guest) | IP: unknown | {"action":"system_event","event":"Nettoyage du cache","details":{"files_removed":15}}
+[2025-10-15 02:19:45] INFO: Événement système: Sauvegarde automatique | User: Guest (guest) | IP: unknown | {"action":"system_event","event":"Sauvegarde automatique","details":{"backup_size":"2.5MB"}}
+[2025-10-15 02:19:45] INFO: Information générale | User: Guest (guest) | IP: unknown | {"module":"test"}
+[2025-10-15 02:19:45] WARNING: Avertissement système | User: Guest (guest) | IP: unknown | {"module":"test","issue":"M\u00e9moire faible"}
+[2025-10-15 02:19:45] ERROR: Erreur critique | User: Guest (guest) | IP: unknown | {"module":"test","error_code":"DB_CONNECTION_FAILED"}
+[2025-10-15 02:19:45] DEBUG: Message de débogage | User: Guest (guest) | IP: unknown | {"module":"test","debug_info":"Variable x = 42"}
+[2025-10-15 02:22:25] INFO: Connexion réussie | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":1,"user_name":"Admin Test","success":true}
+[2025-10-15 02:22:25] INFO: Activité utilisateur: Accès aux logs système | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Acc\u00e8s aux logs syst\u00e8me","details":[]}
+[2025-10-15 02:22:25] WARNING: Événement de sécurité: Test de sécurité | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Test de s\u00e9curit\u00e9","details":{"test":true}}
+[2025-10-15 02:24:29] INFO: Connexion réussie | User: Guest (guest) | IP: unknown | {"action":"user_login","user_id":1,"user_name":"Admin Test","success":true}
+[2025-10-15 02:24:29] INFO: Activité utilisateur: Test interface compacte | User: Guest (guest) | IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Test interface compacte","details":[]}
+[2025-10-15 02:24:29] WARNING: Événement de sécurité: Test sécurité | User: Guest (guest) | IP: unknown | {"action":"security_event","event":"Test s\u00e9curit\u00e9","details":{"compact":true}}
+[2025-10-15 02:26:13] INFO: Connexion réussie | 👤 User: Guest (guest) | 🌐 IP: unknown | {"action":"user_login","user_id":1,"user_name":"Admin Test","success":true}
+[2025-10-15 02:26:13] INFO: Activité utilisateur: Test avec IP visible | 👤 User: Guest (guest) | 🌐 IP: unknown | {"action":"user_activity","user_id":1,"user_name":"Admin Test","activity":"Test avec IP visible","details":[]}
+[2025-10-15 02:26:13] WARNING: Événement de sécurité: Test sécurité avec IP | 👤 User: Guest (guest) | 🌐 IP: unknown | {"action":"security_event","event":"Test s\u00e9curit\u00e9 avec IP","details":{"ip_test":true}}
+[2025-10-15 03:20:01] INFO: Connexion réussie | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_login","user_id":7,"user_name":"Jean MBAYO","success":true}
+[2025-10-15 03:20:01] INFO: Activité utilisateur: Connexion au système | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Connexion au syst\u00e8me","details":[]}
+[2025-10-15 03:20:01] INFO: Activité utilisateur: Accès au dashboard | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s au dashboard","details":[]}
+[2025-10-15 03:20:26] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 03:20:34] INFO: Activité utilisateur: Accès au dashboard | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s au dashboard","details":[]}
+[2025-10-15 03:27:03] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 03:28:53] INFO: Activité utilisateur: Accès à la médiathèque (sans connexion) | 👤 User: Guest (guest) | 🌐 IP: unknown | {"action":"user_activity","user_id":0,"user_name":"Visiteur","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que (sans connexion)","details":[]}
+[2025-10-15 03:29:03] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 03:29:16] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 03:49:49] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 03:53:13] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 03:53:56] INFO: Connexion réussie | 👤 User: Salle du Numérique (11) | 🌐 IP: ::1 | {"action":"user_login","user_id":11,"user_name":"Salle du Num\u00e9rique","success":true}
+[2025-10-15 03:53:56] INFO: Activité utilisateur: Connexion au système | 👤 User: Salle du Numérique (11) | 🌐 IP: ::1 | {"action":"user_activity","user_id":11,"user_name":"Salle du Num\u00e9rique","activity":"Connexion au syst\u00e8me","details":[]}
+[2025-10-15 04:52:44] INFO: Connexion réussie | 👤 User: Salle du Numérique (11) | 🌐 IP: ::1 | {"action":"user_login","user_id":11,"user_name":"Salle du Num\u00e9rique","success":true}
+[2025-10-15 04:52:44] INFO: Activité utilisateur: Connexion au système | 👤 User: Salle du Numérique (11) | 🌐 IP: ::1 | {"action":"user_activity","user_id":11,"user_name":"Salle du Num\u00e9rique","activity":"Connexion au syst\u00e8me","details":[]}
+[2025-10-15 04:52:54] INFO: Connexion réussie | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_login","user_id":7,"user_name":"Jean MBAYO","success":true}
+[2025-10-15 04:52:54] INFO: Activité utilisateur: Connexion au système | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Connexion au syst\u00e8me","details":[]}
+[2025-10-15 04:52:55] INFO: Activité utilisateur: Accès au dashboard | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s au dashboard","details":[]}
+[2025-10-15 04:54:21] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 04:56:08] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 04:56:26] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 04:59:32] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 05:01:43] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 05:16:13] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}
+[2025-10-15 05:16:22] INFO: Activité utilisateur: Accès au dashboard | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s au dashboard","details":[]}
+[2025-10-15 05:16:39] INFO: Activité utilisateur: Accès à la médiathèque | 👤 User: Jean MBAYO (7) | 🌐 IP: ::1 | {"action":"user_activity","user_id":7,"user_name":"Jean MBAYO","activity":"Acc\u00e8s \u00e0 la m\u00e9diath\u00e8que","details":[]}

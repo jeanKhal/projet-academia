@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Vérifier que l'utilisateur est connecté et est admin
 if (!isLoggedIn()) {
@@ -69,8 +69,11 @@ $recent_activities = $pdo->query("
         <!-- Sidebar -->
         <?php include 'includes/sidebar.php'; ?>
 
+        <!-- Séparateur visuel -->
+        <div class="hidden md:block w-px bg-gradient-to-b from-gray-200 to-gray-300 mt-16 h-[calc(100vh-4rem-1.5rem)]" style="margin-left: 256px;"></div>
+
         <!-- Contenu principal -->
-        <div class="flex-1 p-3 md:p-6 mt-16 pb-20">
+        <div class="flex-1 p-4 md:p-6 mt-16 pb-16 bg-white rounded-l-2xl shadow-sm border-l-2 border-gray-100 min-h-[calc(100vh-4rem-1.5rem)]" style="margin-left: -4px;">
             <div class="mb-6">
                 <h1 class="text-xl md:text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
                 <p class="text-xs md:text-sm text-gray-600">Vue d'ensemble de la plateforme Académie IA</p>

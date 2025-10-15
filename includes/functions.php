@@ -56,6 +56,9 @@ function registerUser($fullName, $email, $password, $role = 'student') {
 function loginUser($email, $password) {
     $pdo = getDB();
     
+    // Inclure le système de logging
+    require_once __DIR__ . '/logger.php';
+    
     $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
@@ -63,6 +66,8 @@ function loginUser($email, $password) {
     if ($user && password_verify($password, $user['password'])) {
         // Vérifier si le compte est actif
         if (!$user['is_active']) {
+            logUserLogin($user['id'], $user['full_name'], false);
+            logSecurityEvent('Tentative de connexion avec compte désactivé', ['email' => $email]);
             return ['success' => false, 'message' => 'Votre compte a été désactivé par l\'administrateur. Veuillez contacter l\'administration pour plus d\'informations.'];
         }
         
@@ -73,9 +78,18 @@ function loginUser($email, $password) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_role'] = $user['role'];
+        $_SESSION['user_name'] = $user['full_name'];
+        
+        // Logger la connexion réussie
+        logUserLogin($user['id'], $user['full_name'], true);
+        logUserActivity($user['id'], $user['full_name'], 'Connexion au système');
         
         return ['success' => true, 'user' => $user];
     }
+    
+    // Logger l'échec de connexion
+    logUserLogin(0, 'Unknown', false);
+    logSecurityEvent('Tentative de connexion échouée', ['email' => $email]);
     
     return ['success' => false, 'message' => 'Email ou mot de passe incorrect'];
 }
@@ -85,6 +99,24 @@ function getUserById($userId) {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     return $stmt->fetch();
+}
+
+function logoutUser() {
+    // Inclure le système de logging
+    require_once __DIR__ . '/logger.php';
+    
+    if (isLoggedIn()) {
+        $userId = $_SESSION['user_id'];
+        $userName = $_SESSION['user_name'] ?? 'Unknown';
+        
+        // Logger la déconnexion
+        logUserLogout($userId, $userName);
+        logUserActivity($userId, $userName, 'Déconnexion du système');
+    }
+    
+    // Détruire la session
+    session_destroy();
+    session_start();
 }
 
 function isLoggedIn() {

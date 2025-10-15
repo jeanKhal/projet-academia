@@ -2,6 +2,7 @@
 session_start();
 require_once 'config/database.php';
 require_once 'includes/functions.php';
+require_once 'includes/logger.php';
 
 // Vérifier si l'utilisateur est connecté
 if (!isLoggedIn()) {
@@ -10,6 +11,9 @@ if (!isLoggedIn()) {
 }
 
 $user = getUserById($_SESSION['user_id']);
+
+// Logger l'accès au dashboard
+logUserActivity($user['id'], $user['full_name'], 'Accès au dashboard');
 
 // Sécurité: si l'utilisateur n'existe plus en base, réinitialiser la session
 if (!$user) {
@@ -35,6 +39,11 @@ $recentCourses = getRecentCourses(6);
 // Récupérer les ressources récentes
 $recentResources = getAllResources(null, null);
 $recentResources = array_slice($recentResources, 0, 6);
+
+// Calcul de la progression globale (ressources complétées / total ressources)
+$allResourcesForProgress = getAllResources(null, null);
+$totalResourcesCount = is_array($allResourcesForProgress) ? count($allResourcesForProgress) : 0;
+$overallProgress = $totalResourcesCount > 0 ? (int) floor(($completedResources / $totalResourcesCount) * 100) : 0;
 
 $userCertifications = getUserCertifications($user['id']);
 
@@ -67,23 +76,6 @@ $enrolledCourses = getEnrolledCourses($user['id']);
     <title>Mon Tableau de Bord - Académie IA</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Barre de défilement personnalisée pour WebKit */
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-track {
-            background: #f7fafc;
-            border-radius: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
-        }
-    </style>
 </head>
 <body class="bg-gray-50 overflow-x-hidden">
     <!-- Navigation -->
@@ -91,21 +83,16 @@ $enrolledCourses = getEnrolledCourses($user['id']);
 
     <div class="flex">
         <!-- Sidebar (desktop) -->
-        <div class="hidden md:block w-64 bg-white shadow-md border-r border-gray-200 rounded-r-xl fixed left-0 top-16 h-[calc(100vh-4rem-1.5rem)] z-30" style="scrollbar-width: thin; scrollbar-color: #cbd5e0 #f7fafc;">
-            <div class="px-3 pt-3 pb-3 h-full overflow-y-hidden hover:overflow-y-auto overscroll-contain pr-2 sidebar-scroll">
+        <div class="hidden md:block w-64 bg-white shadow-md border-r border-gray-200 rounded-r-xl fixed left-0 top-16 h-[calc(100vh-4rem-1.5rem)] z-30">
+            <div class="px-3 pt-3 pb-3 h-full overflow-y-auto">
                 <!-- Profil utilisateur -->
                 <div class="text-center mb-3">
                     <div class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
                         <i class="fas fa-user-graduate text-white text-lg"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo htmlspecialchars($user['full_name']); ?></h3>
-                    <p class="text-xs text-gray-500">Étudiant IA</p>
-                    <div class="mt-1">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
-                            <i class="fas fa-star mr-1"></i>
-                            Niveau <?php echo $user['level'] ?? 'Débutant'; ?>
-                        </span>
-                    </div>
+                    <p class="text-xs text-gray-500">Étudiant</p>
+                    
                 </div>
 
                 <!-- Navigation -->
@@ -165,7 +152,7 @@ $enrolledCourses = getEnrolledCourses($user['id']);
                             Bonjour, <?php echo htmlspecialchars($user['full_name']); ?> ! 👋
                         </h1>
                         <p class="text-base md:text-lg text-gray-600">
-                            Continuez votre apprentissage en Intelligence Artificielle
+                            Continuez votre apprentissage avec nos ressources multidisciplinaires
                         </p>
                         <div class="mt-4 flex items-center space-x-4">
                             <div class="flex items-center">
@@ -373,5 +360,6 @@ $enrolledCourses = getEnrolledCourses($user['id']);
 
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
+
 </body>
 </html>

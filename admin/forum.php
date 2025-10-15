@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Vérifier que l'utilisateur est connecté et est admin
 if (!isLoggedIn()) {
@@ -28,16 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($_POST['action']) {
             case 'approve_post':
                 $post_id = (int)$_POST['post_id'];
-                $stmt = $pdo->prepare("UPDATE forum_posts SET status = 'approved', moderated_by = ?, moderated_at = NOW() WHERE id = ?");
-                $stmt->execute([$user['id'], $post_id]);
+                $stmt = $pdo->prepare("UPDATE forum_posts SET is_active = 1, updated_at = NOW() WHERE id = ?");
+                $stmt->execute([$post_id]);
                 setFlashMessage('success', 'Post approuvé');
                 break;
                 
             case 'reject_post':
                 $post_id = (int)$_POST['post_id'];
                 $reason = trim($_POST['reason']);
-                $stmt = $pdo->prepare("UPDATE forum_posts SET status = 'rejected', moderation_reason = ?, moderated_by = ?, moderated_at = NOW() WHERE id = ?");
-                $stmt->execute([$reason, $user['id'], $post_id]);
+                $stmt = $pdo->prepare("UPDATE forum_posts SET is_active = 0, updated_at = NOW() WHERE id = ?");
+                $stmt->execute([$post_id]);
                 setFlashMessage('success', 'Post rejeté');
                 break;
                 
@@ -51,14 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'ban_user':
                 $user_id = (int)$_POST['user_id'];
                 $reason = trim($_POST['reason']);
-                $stmt = $pdo->prepare("UPDATE users SET is_banned = 1, ban_reason = ?, banned_by = ?, banned_at = NOW() WHERE id = ?");
-                $stmt->execute([$reason, $user['id'], $user_id]);
+                $stmt = $pdo->prepare("UPDATE users SET is_active = 0, updated_at = NOW() WHERE id = ?");
+                $stmt->execute([$user_id]);
                 setFlashMessage('success', 'Utilisateur banni');
                 break;
                 
             case 'unban_user':
                 $user_id = (int)$_POST['user_id'];
-                $stmt = $pdo->prepare("UPDATE users SET is_banned = 0, ban_reason = NULL, banned_by = NULL, banned_at = NULL WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET is_active = 1, updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$user_id]);
                 setFlashMessage('success', 'Utilisateur débanni');
                 break;
@@ -74,15 +74,19 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 20;
 $offset = ($page - 1) * $limit;
 
-$status_filter = isset($_GET['status']) ? $_GET['status'] : 'pending';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 
 $where_conditions = [];
 $params = [];
 
-if ($status_filter !== 'all') {
-    $where_conditions[] = "fp.status = ?";
-    $params[] = $status_filter;
+// Ajouter une condition selon le filtre de statut
+if ($status_filter === 'active') {
+    $where_conditions[] = "fp.is_active = 1";
+} elseif ($status_filter === 'inactive') {
+    $where_conditions[] = "fp.is_active = 0";
+} elseif ($status_filter === 'pinned') {
+    $where_conditions[] = "fp.is_pinned = 1";
 }
 
 if ($search) {
@@ -106,7 +110,7 @@ $total_pages = ceil($total_posts / $limit);
 
 // Récupération des posts
 $posts_stmt = $pdo->prepare("
-    SELECT fp.*, u.full_name, u.email, u.is_banned,
+    SELECT fp.*, u.full_name, u.email,
            (SELECT COUNT(*) FROM forum_replies WHERE post_id = fp.id) as replies_count
     FROM forum_posts fp 
     LEFT JOIN users u ON fp.user_id = u.id 
@@ -123,9 +127,9 @@ $posts = $posts_stmt->fetchAll();
 $stats_stmt = $pdo->prepare("
     SELECT 
         COUNT(*) as total_posts,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_posts,
-        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_posts,
-        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_posts
+        SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_posts,
+        SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive_posts,
+        SUM(CASE WHEN is_pinned = 1 THEN 1 ELSE 0 END) as pinned_posts
     FROM forum_posts
 ");
 $stats_stmt->execute();
@@ -144,9 +148,14 @@ $stats = $stats_stmt->fetch();
     <?php include 'includes/header.php'; ?>
 
     <div class="flex">
+        <!-- Sidebar -->
         <?php include 'includes/sidebar.php'; ?>
 
-        <div class="flex-1 p-4 md:p-8 mt-16 pb-16">
+        <!-- Séparateur visuel -->
+        <div class="hidden md:block w-px bg-gradient-to-b from-gray-200 to-gray-300 mt-16 h-[calc(100vh-4rem-1.5rem)]" style="margin-left: 256px;"></div>
+
+        <!-- Contenu principal -->
+        <div class="flex-1 p-4 md:p-6 mt-16 pb-16 bg-white rounded-l-2xl shadow-sm border-l-2 border-gray-100 min-h-[calc(100vh-4rem-1.5rem)]" style="margin-left: -4px;">
             <div class="mb-8">
                 <div class="flex justify-between items-center">
                     <div>
@@ -183,8 +192,8 @@ $stats = $stats_stmt->fetch();
                             <i class="fas fa-clock text-yellow-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">En Attente</p>
-                            <p class="text-2xl font-semibold text-gray-900"><?php echo $stats['pending_posts']; ?></p>
+                            <p class="text-sm font-medium text-gray-600">Inactifs</p>
+                            <p class="text-2xl font-semibold text-gray-900"><?php echo $stats['inactive_posts']; ?></p>
                         </div>
                     </div>
                 </div>
@@ -194,8 +203,8 @@ $stats = $stats_stmt->fetch();
                             <i class="fas fa-check text-green-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Approuvés</p>
-                            <p class="text-2xl font-semibold text-gray-900"><?php echo $stats['approved_posts']; ?></p>
+                            <p class="text-sm font-medium text-gray-600">Actifs</p>
+                            <p class="text-2xl font-semibold text-gray-900"><?php echo $stats['active_posts']; ?></p>
                         </div>
                     </div>
                 </div>
@@ -205,8 +214,8 @@ $stats = $stats_stmt->fetch();
                             <i class="fas fa-times text-red-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Rejetés</p>
-                            <p class="text-2xl font-semibold text-gray-900"><?php echo $stats['rejected_posts']; ?></p>
+                            <p class="text-sm font-medium text-gray-600">Épinglés</p>
+                            <p class="text-2xl font-semibold text-gray-900"><?php echo $stats['pinned_posts']; ?></p>
                         </div>
                     </div>
                 </div>
@@ -222,10 +231,10 @@ $stats = $stats_stmt->fetch();
                     </div>
                     <div>
                         <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-                            <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>Tous les statuts</option>
-                            <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>En attente</option>
-                            <option value="approved" <?php echo $status_filter === 'approved' ? 'selected' : ''; ?>>Approuvés</option>
-                            <option value="rejected" <?php echo $status_filter === 'rejected' ? 'selected' : ''; ?>>Rejetés</option>
+                            <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>Tous les posts</option>
+                            <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Actifs</option>
+                            <option value="inactive" <?php echo $status_filter === 'inactive' ? 'selected' : ''; ?>>Inactifs</option>
+                            <option value="pinned" <?php echo $status_filter === 'pinned' ? 'selected' : ''; ?>>Épinglés</option>
                         </select>
                     </div>
                     <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
@@ -275,7 +284,7 @@ $stats = $stats_stmt->fetch();
                                     <div class="text-sm">
                                         <div class="font-medium text-gray-900"><?php echo htmlspecialchars($post['full_name']); ?></div>
                                         <div class="text-gray-500"><?php echo htmlspecialchars($post['email']); ?></div>
-                                        <?php if ($post['is_banned']): ?>
+                                        <?php if (!$post['is_active']): ?>
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                                 <i class="fas fa-ban mr-1"></i>Banni
                                             </span>
@@ -285,18 +294,26 @@ $stats = $stats_stmt->fetch();
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <?php
                                     $status_colors = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                        'approved' => 'bg-green-100 text-green-800',
-                                        'rejected' => 'bg-red-100 text-red-800'
+                                        'active' => 'bg-green-100 text-green-800',
+                                        'inactive' => 'bg-red-100 text-red-800',
+                                        'pinned' => 'bg-blue-100 text-blue-800'
                                     ];
                                     $status_labels = [
-                                        'pending' => 'En attente',
-                                        'approved' => 'Approuvé',
-                                        'rejected' => 'Rejeté'
+                                        'active' => 'Actif',
+                                        'inactive' => 'Inactif',
+                                        'pinned' => 'Épinglé'
                                     ];
                                     ?>
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full <?php echo $status_colors[$post['status']]; ?>">
-                                        <?php echo $status_labels[$post['status']]; ?>
+                                    <?php
+                                    $current_status = 'active';
+                                    if (!$post['is_active']) {
+                                        $current_status = 'inactive';
+                                    } elseif ($post['is_pinned']) {
+                                        $current_status = 'pinned';
+                                    }
+                                    ?>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full <?php echo $status_colors[$current_status]; ?>">
+                                        <?php echo $status_labels[$current_status]; ?>
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -307,7 +324,7 @@ $stats = $stats_stmt->fetch();
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <?php if ($post['status'] === 'pending'): ?>
+                                        <?php if ($post['is_active'] == 0): ?>
                                             <form method="POST" class="inline" onsubmit="return confirm('Approuver ce post ?')">
                                                 <input type="hidden" name="action" value="approve_post">
                                                 <input type="hidden" name="post_id" value="<?php echo $post['id']; ?>">
@@ -319,7 +336,7 @@ $stats = $stats_stmt->fetch();
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         <?php endif; ?>
-                                        <?php if ($post['is_banned']): ?>
+                                        <?php if (!$post['is_active']): ?>
                                             <form method="POST" class="inline" onsubmit="return confirm('Débannir cet utilisateur ?')">
                                                 <input type="hidden" name="action" value="unban_user">
                                                 <input type="hidden" name="user_id" value="<?php echo $post['user_id']; ?>">

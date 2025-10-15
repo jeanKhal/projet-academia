@@ -6,6 +6,20 @@ if ($isLoggedIn) {
     $user = getUserById($_SESSION['user_id']);
 }
 ?>
+<style>
+/* Cross-browser baseline for consistent rendering */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; }
+img, video { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; }
+.sidebar-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e0 #f7fafc; }
+.sidebar-scroll::-webkit-scrollbar { width: 8px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: #f7fafc; border-radius: 4px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+.sidebar-scroll::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+</style>
 <nav class="bg-white shadow-lg fixed top-0 left-0 right-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">

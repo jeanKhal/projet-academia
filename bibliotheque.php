@@ -369,6 +369,7 @@ function getAllBooksByType($type, $limit = 24, $keyword = '') {
 
 $allBooks = getAllBooksByType($selectedType, 24, $keyword);
 
+
 // Images depuis le dossier 'livres'
 $bookImageDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres';
 $bookImageWebBase = 'livres';
@@ -382,6 +383,323 @@ if (is_dir($bookImageDir)) {
         }
     }
     sort($bookImages);
+}
+
+
+// Livres de droit depuis le dossier
+$droitBooks = [];
+$droitDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres' . DIRECTORY_SEPARATOR . 'droit';
+
+if (is_dir($droitDir)) {
+    $pdfFiles = [];
+    $jpgFiles = [];
+    
+    foreach (scandir($droitDir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            $pdfFiles[] = $file;
+        } elseif (in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $jpgFiles[] = $file;
+        }
+    }
+    
+    // Créer des entrées pour les PDF trouvés
+    foreach ($pdfFiles as $pdfFile) {
+        $title = pathinfo($pdfFile, PATHINFO_FILENAME);
+        
+        // Chercher une couverture correspondante (par nom de base)
+        $coverFile = null;
+        foreach ($jpgFiles as $jpgFile) {
+            $jpgBase = pathinfo($jpgFile, PATHINFO_FILENAME);
+            if ($jpgBase === $title) {
+                $coverFile = $jpgFile;
+                break;
+            }
+        }
+        
+        // Si pas de couverture exacte, prendre la première JPG disponible
+        if (!$coverFile && !empty($jpgFiles)) {
+            $coverFile = $jpgFiles[0];
+        }
+        
+        if ($coverFile) {
+            $droitBooks[] = [
+                'id' => 'droit_' . md5($pdfFile),
+                'title' => $title,
+                'description' => 'Livre de droit disponible en ligne',
+                'file_url' => 'livres/droit/' . $pdfFile,
+                'cover_url' => 'livres/droit/' . $coverFile,
+                'author' => 'Expert Juridique',
+                'category' => 'law',
+                'type' => 'book'
+            ];
+        }
+    }
+}
+
+// Livres de marketing depuis le dossier
+$marketingBooks = [];
+$marketingDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres' . DIRECTORY_SEPARATOR . 'marketing';
+
+if (is_dir($marketingDir)) {
+    $pdfFiles = [];
+    $jpgFiles = [];
+    
+    foreach (scandir($marketingDir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            $pdfFiles[] = $file;
+        } elseif (in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $jpgFiles[] = $file;
+        }
+    }
+    
+    // Créer des entrées pour les PDF trouvés
+    foreach ($pdfFiles as $pdfFile) {
+        $title = pathinfo($pdfFile, PATHINFO_FILENAME);
+        
+        // Chercher une couverture correspondante (par nom de base)
+        $coverFile = null;
+        foreach ($jpgFiles as $jpgFile) {
+            $jpgBase = pathinfo($jpgFile, PATHINFO_FILENAME);
+            if ($jpgBase === $title) {
+                $coverFile = $jpgFile;
+                break;
+            }
+        }
+        
+        // Si pas de couverture exacte, prendre la première JPG disponible
+        if (!$coverFile && !empty($jpgFiles)) {
+            $coverFile = $jpgFiles[0];
+        }
+        
+        if ($coverFile) {
+            $marketingBooks[] = [
+                'id' => 'marketing_' . md5($pdfFile),
+                'title' => $title,
+                'description' => 'Livre de marketing disponible en ligne',
+                'file_url' => 'livres/marketing/' . $pdfFile,
+                'cover_url' => 'livres/marketing/' . $coverFile,
+                'author' => 'Expert Marketing',
+                'category' => 'marketing',
+                'type' => 'book'
+            ];
+        }
+    }
+}
+
+// Livres d'ingénierie depuis le dossier
+$ingenierieBooks = [];
+$ingenierieDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres' . DIRECTORY_SEPARATOR . 'ingenierie';
+
+if (is_dir($ingenierieDir)) {
+    $pdfFiles = [];
+    $jpgFiles = [];
+    
+    foreach (scandir($ingenierieDir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            $pdfFiles[] = $file;
+        } elseif (in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $jpgFiles[] = $file;
+        }
+    }
+    
+    // Créer des entrées pour les PDF trouvés
+    foreach ($pdfFiles as $pdfFile) {
+        $title = pathinfo($pdfFile, PATHINFO_FILENAME);
+        
+        // Chercher une couverture correspondante (par nom de base)
+        $coverFile = null;
+        foreach ($jpgFiles as $jpgFile) {
+            $jpgBase = pathinfo($jpgFile, PATHINFO_FILENAME);
+            if ($jpgBase === $title) {
+                $coverFile = $jpgFile;
+                break;
+            }
+        }
+        
+        // Si pas de couverture exacte, prendre la première JPG disponible
+        if (!$coverFile && !empty($jpgFiles)) {
+            $coverFile = $jpgFiles[0];
+        }
+        
+        if ($coverFile) {
+            $ingenierieBooks[] = [
+                'id' => 'ingenierie_' . md5($pdfFile),
+                'title' => $title,
+                'description' => 'Livre d\'ingénierie disponible en ligne',
+                'file_url' => 'livres/ingenierie/' . $pdfFile,
+                'cover_url' => 'livres/ingenierie/' . $coverFile,
+                'author' => 'Expert Ingénierie',
+                'category' => 'engineering',
+                'type' => 'book'
+            ];
+        }
+    }
+}
+
+// Livres de gestion de projet depuis le dossier
+$gestionProjetBooks = [];
+$gestionProjetDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres' . DIRECTORY_SEPARATOR . 'gestion de projet';
+
+if (is_dir($gestionProjetDir)) {
+    $pdfFiles = [];
+    $jpgFiles = [];
+    
+    foreach (scandir($gestionProjetDir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            $pdfFiles[] = $file;
+        } elseif (in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $jpgFiles[] = $file;
+        }
+    }
+    
+    // Créer des entrées pour les PDF trouvés
+    foreach ($pdfFiles as $pdfFile) {
+        $title = pathinfo($pdfFile, PATHINFO_FILENAME);
+        
+        // Chercher une couverture correspondante (par nom de base)
+        $coverFile = null;
+        foreach ($jpgFiles as $jpgFile) {
+            $jpgBase = pathinfo($jpgFile, PATHINFO_FILENAME);
+            if ($jpgBase === $title) {
+                $coverFile = $jpgFile;
+                break;
+            }
+        }
+        
+        // Si pas de couverture exacte, prendre la première JPG disponible
+        if (!$coverFile && !empty($jpgFiles)) {
+            $coverFile = $jpgFiles[0];
+        }
+        
+        if ($coverFile) {
+            $gestionProjetBooks[] = [
+                'id' => 'gestion_projet_' . md5($pdfFile),
+                'title' => $title,
+                'description' => 'Livre de gestion de projet disponible en ligne',
+                'file_url' => 'livres/gestion de projet/' . $pdfFile,
+                'cover_url' => 'livres/gestion de projet/' . $coverFile,
+                'author' => 'Expert Gestion de Projet',
+                'category' => 'project-management',
+                'type' => 'book'
+            ];
+        }
+    }
+}
+
+// Livres de psychologie depuis le dossier
+$psychologieBooks = [];
+$psychologieDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres' . DIRECTORY_SEPARATOR . 'psychologie';
+
+if (is_dir($psychologieDir)) {
+    $pdfFiles = [];
+    $jpgFiles = [];
+    
+    foreach (scandir($psychologieDir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            $pdfFiles[] = $file;
+        } elseif (in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $jpgFiles[] = $file;
+        }
+    }
+    
+    // Créer des entrées pour les PDF trouvés
+    foreach ($pdfFiles as $pdfFile) {
+        $title = pathinfo($pdfFile, PATHINFO_FILENAME);
+        
+        // Chercher une couverture correspondante (par nom de base)
+        $coverFile = null;
+        foreach ($jpgFiles as $jpgFile) {
+            $jpgBase = pathinfo($jpgFile, PATHINFO_FILENAME);
+            if ($jpgBase === $title) {
+                $coverFile = $jpgFile;
+                break;
+            }
+        }
+        
+        // Si pas de couverture exacte, prendre la première JPG disponible
+        if (!$coverFile && !empty($jpgFiles)) {
+            $coverFile = $jpgFiles[0];
+        }
+        
+        if ($coverFile) {
+            $psychologieBooks[] = [
+                'id' => 'psychologie_' . md5($pdfFile),
+                'title' => $title,
+                'description' => 'Livre de psychologie disponible en ligne',
+                'file_url' => 'livres/psychologie/' . $pdfFile,
+                'cover_url' => 'livres/psychologie/' . $coverFile,
+                'author' => 'Expert Psychologie',
+                'category' => 'psychology',
+                'type' => 'book'
+            ];
+        }
+    }
+}
+
+// Livres d'informatique et programmation depuis le dossier
+$infoProgBooks = [];
+$infoProgDir = __DIR__ . DIRECTORY_SEPARATOR . 'livres' . DIRECTORY_SEPARATOR . 'informatique et programmation';
+
+if (is_dir($infoProgDir)) {
+    $pdfFiles = [];
+    $jpgFiles = [];
+    
+    foreach (scandir($infoProgDir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            $pdfFiles[] = $file;
+        } elseif (in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $jpgFiles[] = $file;
+        }
+    }
+    
+    foreach ($pdfFiles as $pdfFile) {
+        $title = pathinfo($pdfFile, PATHINFO_FILENAME);
+        $coverFile = null;
+        foreach ($jpgFiles as $jpgFile) {
+            $jpgBase = pathinfo($jpgFile, PATHINFO_FILENAME);
+            if ($jpgBase === $title) {
+                $coverFile = $jpgFile;
+                break;
+            }
+        }
+        if (!$coverFile && !empty($jpgFiles)) {
+            $coverFile = $jpgFiles[0];
+        }
+        if ($coverFile) {
+            $infoProgBooks[] = [
+                'id' => 'infoprog_' . md5($pdfFile),
+                'title' => $title,
+                'description' => 'Livre d\'informatique et de programmation disponible en ligne',
+                'file_url' => 'livres/informatique et programmation/' . $pdfFile,
+                'cover_url' => 'livres/informatique et programmation/' . $coverFile,
+                'author' => 'Expert Informatique',
+                'category' => 'informatique',
+                'type' => 'book'
+            ];
+        }
+    }
+}
+
+// Ajouter les livres de droit, marketing, ingénierie, gestion de projet, psychologie et info/programmation à la liste générale
+$allBooksFromFolders = array_merge($droitBooks, $marketingBooks, $ingenierieBooks, $gestionProjetBooks, $psychologieBooks, $infoProgBooks);
+foreach ($allBooksFromFolders as $book) {
+    // Ajouter la couverture à la liste générale avec le chemin complet
+    $coverFileName = basename($book['cover_url']);
+    if (!in_array($coverFileName, $bookImages)) {
+        $bookImages[] = $coverFileName;
+    }
 }
 ?>
 
@@ -409,6 +727,7 @@ if (is_dir($bookImageDir)) {
         .sidebar-scroll::-webkit-scrollbar-thumb:hover {
             background: #a0aec0;
         }
+        
     </style>
     
 </head>
@@ -426,13 +745,8 @@ if (is_dir($bookImageDir)) {
                     <i class="fas fa-user-graduate text-white text-lg"></i>
                 </div>
                 <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo ($isLoggedIn && !empty($user['full_name'])) ? htmlspecialchars($user['full_name']) : 'Invité'; ?></h3>
-                <p class="text-xs text-gray-500">Étudiant IA</p>
-                <div class="mt-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
-                        <i class="fas fa-star mr-1"></i>
-                        Niveau <?php echo $user['level'] ?? 'Débutant'; ?>
-                    </span>
-                </div>
+                    <p class="text-xs text-gray-500">Étudiant</p>
+                
             </div>
 
             <!-- Navigation -->
@@ -688,6 +1002,174 @@ if (is_dir($bookImageDir)) {
                 </div>
             </div>
 
+            <!-- Livres de droit -->
+            <div id="droit-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+                <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-gavel mr-2 text-red-600"></i>
+                            Livres de droit
+                        </h2>
+                        <span class="text-xs text-gray-500">(<?php echo count($droitBooks); ?> livre(s))</span>
+                    </div>
+                </div>
+                <div class="p-4 sm:p-6">
+                    <?php if (!empty($droitBooks)): ?>
+                        <div class="mb-6">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <?php foreach ($droitBooks as $book): ?>
+                                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer" onclick="openBook('<?php echo htmlspecialchars($book['file_url']); ?>', '<?php echo htmlspecialchars($book['title']); ?>')">
+                                        <img src="<?php echo htmlspecialchars($book['cover_url']); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres/droit ».</p>
+                    <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Livres d'ingénierie -->
+    <div id="ingenierie-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+        <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-purple-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-cogs mr-2 text-purple-600"></i>
+                    Livres d'ingénierie
+                </h2>
+                <span class="text-xs text-gray-500">(<?php echo count($ingenierieBooks); ?> livre(s))</span>
+            </div>
+        </div>
+        <div class="p-4 sm:p-6">
+            <?php if (!empty($ingenierieBooks)): ?>
+                <div class="mb-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <?php foreach ($ingenierieBooks as $book): ?>
+                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer" onclick="openBook('<?php echo htmlspecialchars($book['file_url']); ?>', '<?php echo htmlspecialchars($book['title']); ?>')">
+                                <img src="<?php echo htmlspecialchars($book['cover_url']); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres/ingenierie ».</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Livres de gestion de projet -->
+    <div id="gestion-projet-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+        <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-project-diagram mr-2 text-orange-600"></i>
+                    Livres de gestion de projet
+                </h2>
+                <span class="text-xs text-gray-500">(<?php echo count($gestionProjetBooks); ?> livre(s))</span>
+            </div>
+        </div>
+        <div class="p-4 sm:p-6">
+            <?php if (!empty($gestionProjetBooks)): ?>
+                <div class="mb-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <?php foreach ($gestionProjetBooks as $book): ?>
+                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer" onclick="openBook('<?php echo htmlspecialchars($book['file_url']); ?>', '<?php echo htmlspecialchars($book['title']); ?>')">
+                                <img src="<?php echo htmlspecialchars($book['cover_url']); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres/gestion de projet ».</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Livres de psychologie -->
+    <div id="psychologie-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+        <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-pink-50 to-pink-100 border-b border-pink-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-brain mr-2 text-pink-600"></i>
+                    Livres de psychologie
+                </h2>
+                <span class="text-xs text-gray-500">(<?php echo count($psychologieBooks); ?> livre(s))</span>
+            </div>
+        </div>
+        <div class="p-4 sm:p-6">
+            <?php if (!empty($psychologieBooks)): ?>
+                <div class="mb-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <?php foreach ($psychologieBooks as $book): ?>
+                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer" onclick="openBook('<?php echo htmlspecialchars($book['file_url']); ?>', '<?php echo htmlspecialchars($book['title']); ?>')">
+                                <img src="<?php echo htmlspecialchars($book['cover_url']); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres/psychologie ».</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Livres d'informatique et programmation -->
+    <div id="infoprog-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+        <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-code mr-2 text-blue-600"></i>
+                    Livres d'informatique et programmation
+                </h2>
+                <span class="text-xs text-gray-500">(<?php echo count($infoProgBooks); ?> livre(s))</span>
+            </div>
+        </div>
+        <div class="p-4 sm:p-6">
+            <?php if (!empty($infoProgBooks)): ?>
+                <div class="mb-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <?php foreach ($infoProgBooks as $book): ?>
+                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer" onclick="openBook('<?php echo htmlspecialchars($book['file_url']); ?>', '<?php echo htmlspecialchars($book['title']); ?>')">
+                                <img src="<?php echo htmlspecialchars($book['cover_url']); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres/informatique et programmation ».</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Livres de marketing -->
+            <div id="marketing-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+                <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-chart-line mr-2 text-green-600"></i>
+                            Livres de marketing
+                        </h2>
+                        <span class="text-xs text-gray-500">(<?php echo count($marketingBooks); ?> livre(s))</span>
+                    </div>
+                </div>
+                <div class="p-4 sm:p-6">
+                    <?php if (!empty($marketingBooks)): ?>
+                        <div class="mb-6">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <?php foreach ($marketingBooks as $book): ?>
+                                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer" onclick="openBook('<?php echo htmlspecialchars($book['file_url']); ?>', '<?php echo htmlspecialchars($book['title']); ?>')">
+                                        <img src="<?php echo htmlspecialchars($book['cover_url']); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-sm text-gray-600">Aucune couverture trouvée dans le dossier « livres/marketing ».</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <!-- Tous les livres -->
             <div id="all-books" class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
                 <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200">
@@ -703,11 +1185,42 @@ if (is_dir($bookImageDir)) {
                     <?php if (!empty($bookImages)): ?>
                         <div class="mb-6">
                             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                <?php foreach ($bookImages as $img): ?>
-                                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
-                                        <img src="<?php echo htmlspecialchars($bookImageWebBase . '/' . $img); ?>" alt="Couverture" loading="lazy" class="w-full h-auto object-contain">
+                                <?php
+                                // Afficher seulement les livres prêts (pas ceux en traitement)
+                                $readyBooks = [];
+                                
+                                foreach ($bookImages as $img) {
+                                    $bookInfo = null;
+                                    $imageSrc = $bookImageWebBase . '/' . $img;
+                                    
+                                    foreach ($allBooksFromFolders as $book) {
+                                        if (basename($book['cover_url']) === $img) {
+                                            $bookInfo = $book;
+                                            $imageSrc = $book['cover_url'];
+                                            break;
+                                        }
+                                    }
+                                    
+                                    // Afficher seulement les livres qui ont des informations complètes
+                                    if ($bookInfo) {
+                                        $readyBooks[] = ['img' => $img, 'bookInfo' => $bookInfo, 'imageSrc' => $imageSrc];
+                                    }
+                                }
+                                
+                                // Afficher les livres prêts
+                                foreach ($readyBooks as $bookData): 
+                                    $bookInfo = $bookData['bookInfo'];
+                                    $imageSrc = $bookData['imageSrc'];
+                                    $onclick = "openBook('" . htmlspecialchars($bookInfo['file_url']) . "', '" . htmlspecialchars($bookInfo['title']) . "')";
+                                    $cardClass = "border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer";
+                                    $imageClass = "w-full h-auto object-contain";
+                                ?>
+                                    <div class="<?php echo $cardClass; ?>" onclick="<?php echo $onclick; ?>">
+                                        <img src="<?php echo htmlspecialchars($imageSrc); ?>" alt="Couverture" loading="lazy" class="<?php echo $imageClass; ?>">
                                     </div>
                                 <?php endforeach; ?>
+                                
+                                <!-- Les livres en traitement ne sont plus affichés -->
                             </div>
                         </div>
                     <?php else: ?>
@@ -727,7 +1240,7 @@ if (is_dir($bookImageDir)) {
             <div class="p-4">
                 
                     <h3 class="font-semibold text-gray-900 text-sm"><?php echo ($isLoggedIn && !empty($user['full_name'])) ? htmlspecialchars($user['full_name']) : 'Invité'; ?></h3>
-                    <p class="text-xs text-gray-600">Étudiant IA</p>
+                    <p class="text-xs text-gray-600">Étudiant</p>
                     <div class="mt-2">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             <i class="fas fa-star mr-1"></i>
@@ -744,6 +1257,30 @@ if (is_dir($bookImageDir)) {
 
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
+
+    <!-- Modal: Fonctionnalité en construction -->
+    <div id="constructionModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50" data-close="modal"></div>
+        <div class="relative mx-auto mt-24 w-11/12 max-w-sm sm:max-w-md">
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div class="p-5 sm:p-6 flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-center mr-3">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900">Fonctionnalité en construction</h3>
+                        <p class="mt-1 text-sm text-gray-600">Cette fonctionnalité est en cours de construction. Merci de votre patience !</p>
+                    </div>
+                    <button type="button" class="ml-3 text-gray-400 hover:text-gray-600" aria-label="Fermer" title="Fermer" data-close="modal">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+                    <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors" data-close="modal">Compris</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function toggleMobileMenu() {
@@ -771,6 +1308,63 @@ if (is_dir($bookImageDir)) {
                     userMenu.classList.add('hidden');
                 }
             });
+        });
+
+        // Modal: ouverture/fermeture
+        function openConstructionModal() {
+            const modal = document.getElementById('constructionModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            const card = modal.querySelector('.rounded-2xl');
+            if (card) {
+                card.style.transform = 'translateY(8px)';
+                card.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    card.style.transition = 'transform 200ms ease, opacity 200ms ease';
+                    card.style.transform = 'translateY(0)';
+                    card.style.opacity = '1';
+                });
+            }
+        }
+
+        function closeConstructionModal() {
+            const modal = document.getElementById('constructionModal');
+            if (!modal) return;
+            const card = modal.querySelector('.rounded-2xl');
+            if (card) {
+                card.style.transform = 'translateY(8px)';
+                card.style.opacity = '0';
+                setTimeout(() => modal.classList.add('hidden'), 180);
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Fonction appelée au clic sur une couverture
+        function showConstructionMessage() {
+            openConstructionModal();
+        }
+
+        // Fonction pour ouvrir un livre avec le lecteur PDF intégré
+        function openBook(fileUrl, title) {
+            // Rediriger vers le lecteur PDF intégré
+            const viewerUrl = `pdf-viewer.php?file=${encodeURIComponent(fileUrl)}&title=${encodeURIComponent(title)}`;
+            window.open(viewerUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no');
+        }
+
+        // Délégation des actions de fermeture
+        document.addEventListener('click', function(e) {
+            const target = e.target;
+            if (target.closest('[data-close="modal"]')) {
+                closeConstructionModal();
+            }
+        });
+
+        // Fermeture via ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeConstructionModal();
+            }
         });
     </script>
 </body>

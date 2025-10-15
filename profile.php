@@ -145,7 +145,7 @@ function getCertificationPathById($id) {
                     <i class="fas fa-user-graduate text-white text-lg"></i>
                 </div>
                 <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo htmlspecialchars($user['full_name']); ?></h3>
-                <p class="text-xs text-gray-500">Étudiant IA</p>
+                <p class="text-xs text-gray-500">Étudiant</p>
                 <div class="mt-1">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
                         <i class="fas fa-star mr-1"></i>

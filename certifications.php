@@ -75,13 +75,8 @@ $userCertifications = $isLoggedIn ? getUserCertifications($user['id']) : [];
                     <i class="fas fa-user-graduate text-white text-lg"></i>
                 </div>
                 <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo htmlspecialchars($user['full_name']); ?></h3>
-                <p class="text-xs text-gray-500">Étudiant IA</p>
-                <div class="mt-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
-                        <i class="fas fa-star mr-1"></i>
-                        Niveau <?php echo $user['level'] ?? 'Débutant'; ?>
-                    </span>
-                </div>
+                <p class="text-xs text-gray-500">Étudiant</p>
+                
             </div>
 
             <!-- Navigation -->
@@ -228,7 +223,7 @@ $userCertifications = $isLoggedIn ? getUserCertifications($user['id']) : [];
                                                 Continuer
                                             </a>
                                         <?php else: ?>
-                                            <a href="certification.php?id=<?php echo $path['id']; ?>" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded hover:bg-blue-700 transition-colors">
+                                            <a href="certification.php?id=<?php echo $path['id']; ?>" class="start-cert-btn block w-full bg-blue-600 text-white text-center py-2 px-4 rounded hover:bg-blue-700 transition-colors" data-cert-id="<?php echo $path['id']; ?>">
                                                 Commencer
                                             </a>
                                         <?php endif; ?>
@@ -250,6 +245,30 @@ $userCertifications = $isLoggedIn ? getUserCertifications($user['id']) : [];
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
 
+    <!-- Modal: Aucune formation achevée -->
+    <div id="noCompletionModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50" data-close="modal"></div>
+        <div class="relative mx-auto mt-24 w-11/12 max-w-sm sm:max-w-md">
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div class="p-5 sm:p-6 flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-center mr-3">
+                        <i class="fas fa-info"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900">Action indisponible</h3>
+                        <p class="mt-1 text-sm text-gray-600">Aucune formation n'a été achevée pour l'instant. Terminez un parcours pour accéder à la certification.</p>
+                    </div>
+                    <button type="button" class="ml-3 text-gray-400 hover:text-gray-600" aria-label="Fermer" title="Fermer" data-close="modal">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+                    <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors" data-close="modal">Compris</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
@@ -261,6 +280,55 @@ $userCertifications = $isLoggedIn ? getUserCertifications($user['id']) : [];
             const mobileMenuButton = document.querySelector('.mobile-menu-button');
             if (mobileMenuButton) {
                 mobileMenuButton.addEventListener('click', toggleMobileMenu);
+            }
+
+            // Intercepter les clics sur "Commencer" pour afficher le modal
+            document.querySelectorAll('.start-cert-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openNoCompletionModal();
+                });
+            });
+        });
+
+        function openNoCompletionModal() {
+            const modal = document.getElementById('noCompletionModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            const card = modal.querySelector('.rounded-2xl');
+            if (card) {
+                card.style.transform = 'translateY(8px)';
+                card.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    card.style.transition = 'transform 200ms ease, opacity 200ms ease';
+                    card.style.transform = 'translateY(0)';
+                    card.style.opacity = '1';
+                });
+            }
+        }
+
+        function closeNoCompletionModal() {
+            const modal = document.getElementById('noCompletionModal');
+            if (!modal) return;
+            const card = modal.querySelector('.rounded-2xl');
+            if (card) {
+                card.style.transform = 'translateY(8px)';
+                card.style.opacity = '0';
+                setTimeout(() => modal.classList.add('hidden'), 180);
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-close="modal"]')) {
+                closeNoCompletionModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeNoCompletionModal();
             }
         });
     </script>

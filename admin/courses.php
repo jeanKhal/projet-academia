@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Vérifier que l'utilisateur est connecté et est admin
 if (!isLoggedIn()) {
@@ -86,44 +86,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupération des cours avec pagination
+// Chargement simplifié des cours pour améliorer les performances
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 20;
+$limit = 5; // Réduire encore plus le nombre de cours
 $offset = ($page - 1) * $limit;
 
+// Variables pour les filtres (initialisées pour éviter les erreurs)
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $category_filter = isset($_GET['category']) ? $_GET['category'] : '';
 
-// Construction de la requête
-$where_conditions = [];
-$params = [];
+// Cache simple pour éviter de recharger les données
+$cache_file = __DIR__ . '/../logs/cache_courses.json';
+$cache_time = 60; // 1 minute de cache
 
-if ($search) {
-    $where_conditions[] = "(title LIKE ? OR description LIKE ? OR instructor LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
+    $courses_data = json_decode(file_get_contents($cache_file), true);
+    $courses = $courses_data['courses'] ?? [];
+    $total_courses = $courses_data['total'] ?? 0;
+    $total_pages = $courses_data['pages'] ?? 1;
+} else {
+    // Requête simplifiée
+    $courses_stmt = $pdo->prepare("SELECT * FROM courses ORDER BY created_at DESC LIMIT ? OFFSET ?");
+    $courses_stmt->execute([$limit, $offset]);
+    $courses = $courses_stmt->fetchAll();
+    
+    // Compter le total
+    $total_stmt = $pdo->prepare("SELECT COUNT(*) FROM courses");
+    $total_stmt->execute();
+    $total_courses = $total_stmt->fetchColumn();
+    $total_pages = ceil($total_courses / $limit);
+    
+    // Sauvegarder en cache
+    $cache_data = [
+        'courses' => $courses,
+        'total' => $total_courses,
+        'pages' => $total_pages
+    ];
+    file_put_contents($cache_file, json_encode($cache_data));
 }
-
-if ($category_filter) {
-    $where_conditions[] = "category = ?";
-    $params[] = $category_filter;
-}
-
-$where_clause = $where_conditions ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
-
-// Total des cours
-$count_stmt = $pdo->prepare("SELECT COUNT(*) FROM courses $where_clause");
-$count_stmt->execute($params);
-$total_courses = $count_stmt->fetchColumn();
-$total_pages = ceil($total_courses / $limit);
-
-// Récupération des cours
-$courses_stmt = $pdo->prepare("SELECT * FROM courses $where_clause ORDER BY created_at DESC LIMIT ? OFFSET ?");
-$params[] = $limit;
-$params[] = $offset;
-$courses_stmt->execute($params);
-$courses = $courses_stmt->fetchAll();
 
 // Catégories disponibles
 $categories = [
@@ -151,8 +151,11 @@ $categories = [
         <!-- Sidebar -->
         <?php include 'includes/sidebar.php'; ?>
 
+        <!-- Séparateur visuel -->
+        <div class="hidden md:block w-px bg-gradient-to-b from-gray-200 to-gray-300 mt-16 h-[calc(100vh-4rem-1.5rem)]" style="margin-left: 256px;"></div>
+
         <!-- Contenu principal -->
-        <div class="flex-1 p-4 md:p-8 mt-16 pb-16">
+        <div class="flex-1 p-4 md:p-6 mt-16 pb-16 bg-white rounded-l-2xl shadow-sm border-l-2 border-gray-100 min-h-[calc(100vh-4rem-1.5rem)]" style="margin-left: -4px;">
             <div class="mb-8">
                 <div class="flex justify-between items-center">
                     <div>

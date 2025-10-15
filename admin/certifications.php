@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Vérifier que l'utilisateur est connecté et est admin
 if (!isLoggedIn()) {
@@ -136,9 +136,14 @@ $categories = [
     <?php include 'includes/header.php'; ?>
 
     <div class="flex">
+        <!-- Sidebar -->
         <?php include 'includes/sidebar.php'; ?>
 
-        <div class="flex-1 p-4 md:p-8 mt-16 pb-16">
+        <!-- Séparateur visuel -->
+        <div class="hidden md:block w-px bg-gradient-to-b from-gray-200 to-gray-300 mt-16 h-[calc(100vh-4rem-1.5rem)]" style="margin-left: 256px;"></div>
+
+        <!-- Contenu principal -->
+        <div class="flex-1 p-4 md:p-6 mt-16 pb-16 bg-white rounded-l-2xl shadow-sm border-l-2 border-gray-100 min-h-[calc(100vh-4rem-1.5rem)]" style="margin-left: -4px;">
             <div class="mb-8">
                 <div class="flex justify-between items-center">
                     <div>

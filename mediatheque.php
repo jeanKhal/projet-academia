@@ -2,6 +2,7 @@
 session_start();
 require_once 'config/database.php';
 require_once 'includes/functions.php';
+require_once 'includes/logger.php';
 
 // Encodage et locale en français
 header('Content-Type: text/html; charset=utf-8');
@@ -14,9 +15,13 @@ $user = null;
 
 if ($isLoggedIn) {
     $user = getUserById($_SESSION['user_id']);
+    // Logger l'accès à la médiathèque
+    logUserActivity($user['id'], $user['full_name'], 'Accès à la médiathèque');
 } else {
     // Créer un utilisateur par défaut pour l'accès sans connexion
     $user = ['id' => 0, 'full_name' => 'Visiteur', 'level' => 'Débutant'];
+    // Logger l'accès visiteur
+    logUserActivity(0, 'Visiteur', 'Accès à la médiathèque (sans connexion)');
 }
 
 // Récupérer le nom de la série depuis l'URL
@@ -38,17 +43,27 @@ $seriesFolderMap = [
     'Développement personnel' => ['videos/devperso/'],
     'Cybersécurité' => ['videos/cybersecu/'],
     'Design' => ['videos/Design/', 'videos/design/'],
-    'Droit' => ['videos/droit/']
+    'Droit' => ['videos/droit/'],
+    'Économie & Management' => ['videos/economie/'],
+    'Santé et Médecine' => ['videos/science-medicale/'],
+    'Environnement' => ['videos/environnement/'],
+    'Chimie' => ['videos/chimie/'],
+    'Langues' => ['videos/langues/'],
+    'Droit des contrats' => ['videos/droit-contrats/'],
+    'Marketing' => ['videos/marketing/'],
+    'Leadership' => ['videos/leadership/'],
+    'Communication' => ['videos/communication/'],
+    'Informatique' => ['videos/informatique/']
 ];
 
 if ($seriesName === 'Python pour tous') {
-    // Vidéos numérotées pour la série Python
+    // Vidéos Python uniquement du dossier spécifique
     $stmt = $pdo->prepare("
         SELECT r.*, COUNT(rv.id) as view_count
         FROM resources r
         LEFT JOIN resource_views rv ON r.id = rv.resource_id
         WHERE r.type = 'video'
-          AND r.title REGEXP '^[0-9]+\\.'
+          AND r.file_url LIKE '%python pour tous%'
           AND r.is_active = 1
         GROUP BY r.id
         ORDER BY r.title ASC
@@ -61,13 +76,91 @@ if ($seriesName === 'Python pour tous') {
             $episodes[$episodeNumber] = $video;
         }
     }
+} elseif (in_array($seriesName, ['Programmation', 'Réseaux informatiques', 'Bases de données', 'Systèmes d\'exploitation', 'Sécurité informatique'])) {
+    // Gestion des séries d'informatique séparées
+    $likeClauses = [];
+    $params = [];
+    
+    // Détecter le dossier selon le nom de la série
+    $folderPath = '';
+    switch ($seriesName) {
+        case 'Programmation':
+            $folderPath = 'videos/informatique/programmation/';
+            break;
+        case 'Réseaux informatiques':
+            $folderPath = 'videos/informatique/reseaux/';
+            break;
+        case 'Bases de données':
+            $folderPath = 'videos/informatique/bases-donnees/';
+            break;
+        case 'Systèmes d\'exploitation':
+            $folderPath = 'videos/informatique/systemes/';
+            break;
+        case 'Sécurité informatique':
+            $folderPath = 'videos/informatique/securite/';
+            break;
+    }
+    
+    if ($folderPath) {
+        $likeClauses[] = "r.file_url LIKE ?";
+        $params[] = '%' . str_replace('/', '\\', $folderPath) . '%';
+        $likeClauses[] = "r.file_url LIKE ?";
+        $params[] = '%' . $folderPath . '%';
+    }
+    
+    if (!empty($likeClauses)) {
+        $likeSql = implode(' OR ', $likeClauses);
+        $sql = "
+            SELECT r.*, COUNT(rv.id) as view_count
+            FROM resources r
+            LEFT JOIN resource_views rv ON r.id = rv.resource_id
+            WHERE r.type = 'video' AND r.is_active = 1 AND ($likeSql)
+            GROUP BY r.id
+            ORDER BY r.title ASC
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $videos = $stmt->fetchAll();
+        
+        // Trier par numérotation pour les séries d'informatique
+        usort($videos, function($a, $b) {
+            $titleA = $a['title'] ?? '';
+            $titleB = $b['title'] ?? '';
+            
+            $numA = 999;
+            $numB = 999;
+            
+            if (preg_match('/^(\d+)\./', $titleA, $matches)) {
+                $numA = intval($matches[1]);
+            }
+            
+            if (preg_match('/^(\d+)\./', $titleB, $matches)) {
+                $numB = intval($matches[1]);
+            }
+            
+            return $numA - $numB;
+        });
+        
+        // Construire les épisodes avec index séquentiel
+        $index = 1;
+        foreach ($videos as $video) {
+            $episodes[$index++] = $video;
+        }
+    } else {
+        $videos = [];
+    }
+    
 } elseif (isset($seriesFolderMap[$seriesName])) {
     // Séries basées sur des dossiers (devperso, cybersecu, design, droit)
     $likeClauses = [];
     $params = [];
     foreach ($seriesFolderMap[$seriesName] as $folder) {
+        // Variante web (slashes)
         $likeClauses[] = "r.file_url LIKE ?";
-        $params[] = '%' . $folder . '%';
+        $params[] = '%' . str_replace('\\\\', '/', $folder) . '%';
+        // Variante Windows (backslashes)
+        $likeClauses[] = "r.file_url LIKE ?";
+        $params[] = '%' . str_replace('/', '\\', $folder) . '%';
     }
     $likeSql = implode(' OR ', $likeClauses);
     $sql = "
@@ -81,9 +174,112 @@ if ($seriesName === 'Python pour tous') {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $videos = $stmt->fetchAll();
-    $index = 1;
-    foreach ($videos as $video) {
-        $episodes[$index++] = $video;
+
+    // Construire un index par basename de fichier pour fusionner avec le système de fichiers
+    $dbByBasename = [];
+    foreach ($videos as $v) {
+        $p = $v['file_url'] ?? '';
+        $bn = strtolower(basename(str_replace('\\', '/', (string)$p)));
+        if (!empty($bn)) { $dbByBasename[$bn] = $v; }
+    }
+
+    // Pour Droit: fusion DB + fichiers présents sur disque, avec ordre dédié
+    if ($seriesName === 'Droit') {
+        $fsVideos = [];
+        $dir = __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'droit';
+        if (is_dir($dir)) {
+            foreach (scandir($dir) as $file) {
+                if ($file === '.' || $file === '..') continue;
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (!in_array($ext, ['mp4', 'webm', 'ogg'], true)) continue;
+                $bn = strtolower($file);
+                if (isset($dbByBasename[$bn])) {
+                    $fsVideos[] = $dbByBasename[$bn];
+                } else {
+                    $title = pathinfo($file, PATHINFO_FILENAME);
+                    $fsVideos[] = [
+                        'id' => null,
+                        'title' => $title,
+                        'file_url' => 'videos/droit/' . $file,
+                        'view_count' => 0
+                    ];
+                }
+            }
+        }
+        // Si aucun fichier trouvé, fallback aux vidéos DB
+        $sourceVideos = !empty($fsVideos) ? $fsVideos : $videos;
+
+        $featured = null;
+        $numericItems = [];
+        $others = [];
+        foreach ($sourceVideos as $video) {
+            $path = $video['file_url'] ?? '';
+            $normalized = str_replace('\\', '/', (string)$path);
+            $basename = strtolower(basename($normalized));
+            if ($basename === strtolower('Les fondements de la propriété intellectuelle et du droit numérique.mp4')) {
+                $featured = $video;
+                continue;
+            }
+            $nameNoExt = pathinfo($basename, PATHINFO_FILENAME);
+            // Extraire le numéro du début du nom de fichier (ex: "1.Les fondements..." -> 1)
+            if (preg_match('/^(\d+)\./', $nameNoExt, $matches)) {
+                $numericItems[] = ['num' => (int)$matches[1], 'video' => $video];
+            } else {
+                $others[] = $video;
+            }
+        }
+        usort($numericItems, function($a, $b) { return $a['num'] <=> $b['num']; });
+        $index = 1;
+        if (!empty($featured)) {
+            $episodes[$index++] = $featured;
+        }
+        foreach ($numericItems as $item) {
+            $episodes[$index++] = $item['video'];
+        }
+        foreach ($others as $vid) {
+            $episodes[$index++] = $vid;
+        }
+    } else {
+        // Tri par numérotation pour toutes les séries
+        usort($videos, function($a, $b) use ($seriesName) {
+            $titleA = $a['title'] ?? '';
+            $titleB = $b['title'] ?? '';
+            
+            // Extraire les numéros d'épisode
+            $numA = 999; // Par défaut à la fin
+            $numB = 999;
+            
+            // Tri spécial pour Cybersécurité (CompTIA Security puis numérotées)
+            if ($seriesName === 'Cybersécurité') {
+                if (preg_match('/CompTIA Security\(SY0-601\)\s*(\d+)/', $titleA, $matches)) {
+                    $numA = intval($matches[1]);
+                } elseif (preg_match('/^(\d+)\./', $titleA, $matches)) {
+                    $numA = intval($matches[1]);
+                }
+                
+                if (preg_match('/CompTIA Security\(SY0-601\)\s*(\d+)/', $titleB, $matches)) {
+                    $numB = intval($matches[1]);
+                } elseif (preg_match('/^(\d+)\./', $titleB, $matches)) {
+                    $numB = intval($matches[1]);
+                }
+            } else {
+                // Pour toutes les autres séries, tri par numéro d'épisode
+                if (preg_match('/^(\d+)\./', $titleA, $matches)) {
+                    $numA = intval($matches[1]);
+                }
+                
+                if (preg_match('/^(\d+)\./', $titleB, $matches)) {
+                    $numB = intval($matches[1]);
+                }
+            }
+            
+            return $numA - $numB;
+        });
+        
+        $index = 1;
+        foreach ($videos as $video) {
+            $episodes[$index++] = $video;
+        }
     }
 } else {
     // Série générique: fallback sur les vidéos actives triées par date
@@ -134,10 +330,20 @@ if ($isLoggedIn) {
 // Récupérer la vidéo actuelle
 $currentVideo = null;
 $currentVideoId = isset($_GET['video_id']) ? intval($_GET['video_id']) : null;
+$currentVideoFile = isset($_GET['file']) ? $_GET['file'] : null;
 
 if ($currentVideoId) {
     foreach ($episodes as $episode) {
         if ($episode['id'] == $currentVideoId) {
+            $currentVideo = $episode;
+            break;
+        }
+    }
+}
+// Fallback: si un file= est passé (élément sans id depuis le disque)
+if (!$currentVideo && $currentVideoFile) {
+    foreach ($episodes as $episode) {
+        if (!empty($episode['file_url']) && $episode['file_url'] === $currentVideoFile) {
             $currentVideo = $episode;
             break;
         }
@@ -149,8 +355,8 @@ if (!$currentVideo && !empty($episodes)) {
     $currentVideo = reset($episodes);
 }
 
-// Marquer la vidéo comme vue si l'utilisateur est connecté
-if ($currentVideo && $isLoggedIn) {
+// Marquer la vidéo comme vue si l'utilisateur est connecté et que la ressource a un ID valide
+if ($currentVideo && $isLoggedIn && !empty($currentVideo['id'])) {
     $stmt = $pdo->prepare("
         INSERT INTO resource_views (user_id, resource_id, viewed_at) 
         VALUES (?, ?, NOW())
@@ -170,6 +376,16 @@ if ($currentVideo && $isLoggedIn) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         html { scroll-behavior: smooth; }
+        /* Responsive 16:9 wrapper for the main video */
+        .video-wrapper {
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
         
         /* Masquer complètement les contrôles de téléchargement */
         video::-webkit-media-controls-download-button {
@@ -241,29 +457,39 @@ if ($currentVideo && $isLoggedIn) {
     </style>
 
     <!-- Contenu principal -->
-    <main class="w-full mt-16 p-4 md:p-8 pb-48">
+    <main class="w-full mt-16 p-3 sm:p-4 md:p-8 pb-32 md:pb-48">
         <!-- En-tête style LinkedIn Learning -->
-        <div class="mb-6 bg-white border border-gray-200 rounded-lg p-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-4 sm:mb-6 bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
             <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <div class="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                    <div class="flex items-center space-x-2 mb-3 sm:mb-2">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                             <i class="fas fa-play-circle text-white text-xl"></i>
                                     </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900"><?php echo htmlspecialchars($seriesName); ?></h1>
-                            <p class="text-sm text-gray-600">Cours vidéo interactif</p>
+                            <h1 class="text-xl sm:text-2xl font-bold text-gray-900"><?php echo htmlspecialchars($seriesName); ?></h1>
+                            <p class="text-xs sm:text-sm text-gray-600">Cours vidéo interactif</p>
                                     </div>
                                 </div>
                     
-                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                    <div class="flex flex-wrap items-center gap-3 sm:space-x-4 text-xs sm:text-sm text-gray-600">
                         <span class="flex items-center">
                             <i class="fas fa-play-circle mr-1"></i>
                             <?php echo count($episodes); ?> vidéos
                         </span>
                         <span class="flex items-center">
                             <i class="fas fa-clock mr-1"></i>
-                            ~<?php echo count($episodes) * 5; ?> minutes
+                            ~<?php 
+                            $totalDuration = 0;
+                            foreach ($episodes as $episode) {
+                                $duration = $episode['duration'] ?? null;
+                                if ($duration) {
+                                    $totalDuration += intval($duration);
+                                }
+                            }
+                            echo $totalDuration > 0 ? $totalDuration . ' minutes' : (count($episodes) * 5) . ' minutes';
+                            ?>
                         </span>
                         <span class="flex items-center">
                             <i class="fas fa-users mr-1"></i>
@@ -294,13 +520,18 @@ if ($currentVideo && $isLoggedIn) {
                     <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         <i class="fas fa-bookmark mr-2"></i>Enregistrer
                     </button>
+                    <!-- Mobile TOC toggle -->
+                    <button class="md:hidden bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors" id="toggleMobileToc">
+                        <i class="fas fa-list mr-2"></i>Vidéos
+                    </button>
+                                    </div>
                                     </div>
                                     </div>
                         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
             <!-- Lecteur vidéo -->
-            <div class="lg:col-span-3">
+            <div class="md:col-span-2">
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                     <?php if ($currentVideo): ?>
                             <?php 
@@ -312,13 +543,20 @@ if ($currentVideo && $isLoggedIn) {
                         '4. Utilisation de l\'environnement Jupyter' => '4.Utilisation de l\'environnement Jupyter & NoteBook.mp4'
                     ];
                     $videoPath = !empty($currentVideo['file_url']) ? $currentVideo['file_url'] : ('videos/' . ($videoFiles[$currentVideo['title']] ?? $currentVideo['title']));
+                    // Si la vidéo n'a pas d'id (issue du disque), s'assurer que le chemin est correct
+                    if (empty($currentVideo['id']) && isset($currentVideo['file_url'])) {
+                        $videoPath = $currentVideo['file_url'];
+                    }
                     ?>
+                    <div class="md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                        <div class="md:col-span-3 lg:col-span-4 xl:col-span-5">
                     <div class="relative">
                         
                         
+                        <div class="video-wrapper">
                         <video 
                             id="mainVideo" 
-                            class="w-full h-64 md:h-96 bg-black" 
+                                class="w-full h-full" 
                             controls 
                             preload="metadata"
                             poster=""
@@ -333,10 +571,15 @@ if ($currentVideo && $isLoggedIn) {
                             <source src="<?php echo htmlspecialchars($videoPath); ?>" type="video/mp4">
                             Votre navigateur ne supporte pas la lecture vidéo.
                         </video>
+                        </div>
+                        <!-- Titre de la vidéo dans la zone de lecture -->
+                        <div class="px-3 sm:px-4 py-2 bg-white border-t">
+                            <h3 class="text-sm sm:text-base md:text-lg font-semibold text-gray-900 line-clamp-2"><?php echo htmlspecialchars($currentVideo['title']); ?></h3>
+                        </div>
                         
                         <!-- Contrôles personnalisés -->
-                        <div class="bg-gray-100 p-4 border-t">
-                            <div class="flex items-center space-x-4">
+                        <div class="bg-gray-100 p-3 sm:p-4 border-t">
+                            <div class="flex items-center flex-wrap gap-2 sm:gap-3">
                                 <!-- Contrôle du volume -->
                                 <div class="flex items-center space-x-2">
                                     <label class="text-sm font-medium text-gray-700">Volume:</label>
@@ -357,178 +600,95 @@ if ($currentVideo && $isLoggedIn) {
                                     </select>
                                     </div>
                                 
+                                <!-- Précédent / Suivant -->
+                                <div class="flex items-center gap-2 sm:gap-3">
+                                    <button id="prevBtn" title="Vidéo précédente (←)" aria-label="Vidéo précédente" class="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-full text-xs sm:text-sm shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                        <i class="fas fa-arrow-left"></i>
+                                        <span class="hidden xs:inline">Précédent</span>
+                                    </button>
+                                    <button id="nextBtn" title="Vidéo suivante (→)" aria-label="Vidéo suivante" class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2 rounded-full text-xs sm:text-sm shadow hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                        <span class="hidden xs:inline">Suivant</span>
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
                                 <!-- Bouton plein écran -->
-                                <button id="fullscreenBtn" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                <button id="fullscreenBtn" class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700">
                                     <i class="fas fa-expand mr-1"></i>Plein écran
                                 </button>
                                 </div>
                         </div>
-
-                        <!-- Section commentaires, vues et partage -->
-                        <div class="bg-white border-t border-gray-200 p-6">
-                            <!-- Statistiques -->
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="flex items-center space-x-6">
-                                    <div class="flex items-center space-x-2">
-                                        <i class="fas fa-eye text-gray-500"></i>
-                                        <span class="text-sm text-gray-600"><?php echo rand(150, 2500); ?> vues</span>
                             </div>
-                                    <div class="flex items-center space-x-2">
-                                        <i class="fas fa-thumbs-up text-gray-500"></i>
-                                        <span class="text-sm text-gray-600"><?php echo rand(20, 150); ?> j'aime</span>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <i class="fas fa-comment text-gray-500"></i>
-                                        <span class="text-sm text-gray-600"><?php echo rand(5, 50); ?> commentaires</span>
-                                    </div>
+                        <aside class="mt-4 md:mt-0 md:col-span-1 lg:col-span-1 xl:col-span-1"></aside>
                                 </div>
                                 
-                                <!-- Boutons de partage -->
-                                <div class="flex items-center space-x-2">
-                                    <button class="flex items-center space-x-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                        <i class="fas fa-share mr-1"></i>
-                                        <span>Partager</span>
-                                    </button>
-                                    <button class="flex items-center space-x-1 bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-                                        <i class="fas fa-bookmark mr-1"></i>
-                                        <span>Enregistrer</span>
-                                    </button>
-                            </div>
-                        </div>
-
-                            <!-- Zone de commentaires -->
-                            <div class="border-t border-gray-200 pt-6">
-                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Commentaires</h3>
-                                
-                                <!-- Formulaire de commentaire -->
-                                <div class="mb-6">
-                                    <form id="commentForm" class="space-y-4">
-                                        <div>
-                                            <textarea 
-                                                id="commentText" 
-                                                placeholder="Ajouter un commentaire..." 
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                                rows="3"
-                                            ></textarea>
-                                    </div>
-                                        <div class="flex justify-end">
-                                            <button 
-                                                type="submit" 
-                                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                                            >
-                                                <i class="fas fa-paper-plane mr-2"></i>Publier
-                                            </button>
-                                    </div>
-                                    </form>
-                        </div>
-
-                                <!-- Liste des commentaires -->
-                                <div id="commentsList" class="space-y-4">
-                                    <!-- Commentaire exemple 1 -->
-                                    <div class="flex space-x-3 p-4 bg-gray-50 rounded-lg">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                                M
-                            </div>
-                                    </div>
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-2 mb-1">
-                                                <span class="font-semibold text-gray-900">Marie Dubois</span>
-                                                <span class="text-xs text-gray-500">il y a 2 heures</span>
-                                    </div>
-                                            <p class="text-gray-700">Excellent cours ! Très bien expliqué et facile à suivre. Merci pour cette formation.</p>
-                                            <div class="flex items-center space-x-4 mt-2">
-                                                <button class="text-gray-500 hover:text-blue-600 text-sm">
-                                                    <i class="fas fa-thumbs-up mr-1"></i>5
-                                                </button>
-                                                <button class="text-gray-500 hover:text-blue-600 text-sm">
-                                                    <i class="fas fa-reply mr-1"></i>Répondre
-                                                </button>
-                                </div>
-                            </div>
-                        </div>
-
-                                    <!-- Commentaire exemple 2 -->
-                                    <div class="flex space-x-3 p-4 bg-gray-50 rounded-lg">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                                P
-                            </div>
-                                    </div>
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-2 mb-1">
-                                                <span class="font-semibold text-gray-900">Pierre Martin</span>
-                                                <span class="text-xs text-gray-500">il y a 1 jour</span>
-                                    </div>
-                                            <p class="text-gray-700">Parfait pour débuter en Python. Les exemples sont très clairs.</p>
-                                            <div class="flex items-center space-x-4 mt-2">
-                                                <button class="text-gray-500 hover:text-blue-600 text-sm">
-                                                    <i class="fas fa-thumbs-up mr-1"></i>3
-                                                </button>
-                                                <button class="text-gray-500 hover:text-blue-600 text-sm">
-                                                    <i class="fas fa-reply mr-1"></i>Répondre
-                                                </button>
-                                </div>
-                            </div>
-                    </div>
-                    
-                        </div>
                         
-                                <!-- Bouton pour charger plus de commentaires -->
-                                <div class="text-center mt-6">
-                                    <button class="text-blue-600 hover:text-blue-700 font-medium">
-                                        <i class="fas fa-chevron-down mr-1"></i>Charger plus de commentaires
-                            </button>
-                                </div>
                         </div>
-                    </div>
-                    
-                        <!-- Overlay de progression -->
-                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4">
-                            <div class="text-white">
-                                <h3 class="font-semibold text-lg mb-1"><?php echo htmlspecialchars($currentVideo['title']); ?></h3>
-                        </div>
-                        </div>
-                    </div>
+
+                        
+                            </div>
                     <?php else: ?>
                     <div class="h-64 md:h-96 bg-gray-900 flex items-center justify-center">
                         <div class="text-center text-white">
                             <i class="fas fa-video text-4xl mb-4"></i>
                             <p class="text-lg">Aucune vidéo disponible</p>
-                </div>
-            </div>
+                                    </div>
+                                    </div>
                     <?php endif; ?>
                                 </div>
                             </div>
-            </div>
-
-            <!-- Table des matières -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-lg p-6 h-full overflow-y-hidden hover:overflow-y-auto overscroll-contain sidebar-scroll" style="scrollbar-width: thin; scrollbar-color: #cbd5e0 #f7fafc;">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Table des matières</h2>
+                    </div>
                     
-                    <div class="space-y-2 pr-2">
+            <!-- Table des matières (desktop), Mobile TOC below -->
+            <div class="md:col-span-1">
+                <div class="sticky top-20 bg-white rounded-lg shadow-md p-4 max-h:[calc(100vh-7rem)] max-h-[calc(100vh-7rem)] overflow-y-auto overscroll-contain sidebar-scroll" style="scrollbar-width: thin; scrollbar-color: #cbd5e0 #f7fafc;">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">Table des matières</h2>
+                    <div class="mb-3">
+                        <input id="episodeSearch" type="text" placeholder="Rechercher un épisode..." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    <div class="space-y-2 pr-1">
+                        <!-- Affichage normal des épisodes -->
                         <?php foreach ($episodes as $episodeNum => $episode): ?>
-                        <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer <?php echo ($currentVideo && $currentVideo['id'] == $episode['id']) ? 'bg-blue-50 border-blue-300' : ''; ?>" 
-                             onclick="loadVideo(<?php echo $episode['id']; ?>, '<?php echo htmlspecialchars($episode['title']); ?>')">
+                        <div class="episode-item group p-3 border rounded-lg transition-colors cursor-pointer <?php echo ($currentVideo && ($episode['id'] ?? null) == ($currentVideo['id'] ?? null)) ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'; ?>"
+                             data-title="<?php echo htmlspecialchars(strtolower($episode['title'])); ?>"
+                             onclick="<?php echo isset($episode['id']) && $episode['id'] ? 'loadVideo(' . $episode['id'] . ', \' ' . htmlspecialchars($episode['title']) . ' \')' : 'loadVideoByPath(\'' . htmlspecialchars($episode['file_url']) . '\')'; ?>">
                             <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 <?php echo $userProgress[$episodeNum] ? 'bg-green-600' : 'bg-blue-600'; ?> rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fas <?php echo $userProgress[$episodeNum] ? 'fa-check' : 'fa-play'; ?> text-white text-sm"></i>
+                                <div class="w-8 h-8 <?php echo !empty($userProgress[$episodeNum]) ? 'bg-green-600' : 'bg-blue-600'; ?> rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="text-white text-xs font-semibold"><?php echo (int)$episodeNum; ?></span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="text-sm font-medium text-gray-900 line-clamp-2">
-                                        <?php echo htmlspecialchars($episode['title']); ?>
-                                    </h3>
-                                    <p class="text-xs text-gray-500 mt-1"><?php echo $episodeNum * 5; ?> min</p>
+                                    <h3 class="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-700"><?php echo htmlspecialchars($episode['title']); ?></h3>
+                        </div>
+                    </div>
+                        </div>
+                        <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Mobile Table des matières (collapsible) -->
+        <div id="mobileToc" class="md:hidden mt-4 hidden">
+            <div class="bg-white rounded-lg shadow-md p-3">
+                <h2 class="text-base font-semibold text-gray-900 mb-2">Vidéos de la série</h2>
+                <div class="space-y-2">
+                    <!-- Affichage mobile normal des épisodes -->
+                    <?php foreach ($episodes as $episodeNum => $episode): ?>
+                    <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                         onclick="<?php echo isset($episode['id']) && $episode['id'] ? 'loadVideo(' . $episode['id'] . ', \' ' . htmlspecialchars($episode['title']) . ' \')' : 'loadVideoByPath(\'' . htmlspecialchars($episode['file_url']) . '\')'; ?>">
+                            <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold"><?php echo (int)$episodeNum; ?></div>
+                                <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium text-gray-900 truncate"><?php echo htmlspecialchars($episode['title']); ?></div>
                                 </div>
                             </div>
                         </div>
-                        <?php endforeach; ?>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
         </main>
+    
+    
 
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
@@ -536,7 +696,8 @@ if ($currentVideo && $isLoggedIn) {
     <script>
                 // Données des épisodes pour la navigation automatique
                 const episodes = <?php echo json_encode(array_values($episodes)); ?>;
-                const currentVideoId = <?php echo $currentVideo ? $currentVideo['id'] : 'null'; ?>;
+                const currentVideoId = <?php echo $currentVideo && isset($currentVideo['id']) ? ($currentVideo['id'] ?: 'null') : 'null'; ?>;
+                const currentVideoFile = <?php echo $currentVideo && !empty($currentVideo['file_url']) ? json_encode($currentVideo['file_url']) : 'null'; ?>;
                 
         
         function loadVideo(videoId, title) {
@@ -548,6 +709,14 @@ if ($currentVideo && $isLoggedIn) {
             // Recharger la page pour charger la nouvelle vidéo
             window.location.reload();
         }
+        function loadVideoByPath(fileUrl) {
+            // Pour les éléments provenant du disque sans id, on met à jour un param path
+            const url = new URL(window.location);
+            url.searchParams.delete('video_id');
+            url.searchParams.set('file', fileUrl);
+            window.history.pushState({}, '', url);
+            window.location.reload();
+        }
         
         function startSeries(firstVideoId, firstTitle) {
             // Commencer par la première vidéo
@@ -555,31 +724,131 @@ if ($currentVideo && $isLoggedIn) {
         }
         
         function playNextVideo() {
-            // Trouver l'index de la vidéo actuelle
-            const currentIndex = episodes.findIndex(ep => ep.id == currentVideoId);
-            
+            // Trouver l'index de la vidéo actuelle (par id sinon par chemin)
+            let currentIndex = episodes.findIndex(ep => ep.id && currentVideoId && ep.id == currentVideoId);
+            if (currentIndex === -1 && currentVideoFile) {
+                currentIndex = episodes.findIndex(ep => ep.file_url && ep.file_url === currentVideoFile);
+            }
             if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
-                // Jouer la vidéo suivante
                 const nextVideo = episodes[currentIndex + 1];
-                loadVideo(nextVideo.id, nextVideo.title);
+                
+                // Afficher l'animation de transition
+                showTransitionAnimation();
+                
+                // Délai pour l'animation puis chargement de la vidéo suivante
+                setTimeout(() => {
+                    if (nextVideo.id) {
+                        loadVideo(nextVideo.id, nextVideo.title);
+                    } else if (nextVideo.file_url) {
+                        loadVideoByPath(nextVideo.file_url);
+                    }
+                }, 2000);
             } else {
-                // Fin de la série
-                alert('Félicitations ! Vous avez terminé la série.');
+                // Animation de fin de série
+                showCompletionAnimation();
             }
         }
 
-                // Gestion des événements vidéo
+        function playPrevVideo() {
+            let currentIndex = episodes.findIndex(ep => ep.id && currentVideoId && ep.id == currentVideoId);
+            if (currentIndex === -1 && currentVideoFile) {
+                currentIndex = episodes.findIndex(ep => ep.file_url && ep.file_url === currentVideoFile);
+            }
+            if (currentIndex > 0) {
+                const prevVideo = episodes[currentIndex - 1];
+                if (prevVideo.id) {
+                    loadVideo(prevVideo.id, prevVideo.title);
+                } else if (prevVideo.file_url) {
+                    loadVideoByPath(prevVideo.file_url);
+                }
+            }
+        }
+
+                        // Animation de transition entre vidéos
+        function showTransitionAnimation() {
+            // Créer l'overlay de transition
+            const overlay = document.createElement('div');
+            overlay.id = 'transition-overlay';
+            overlay.className = 'fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center';
+            overlay.innerHTML = `
+                <div class="text-center text-white">
+                    <div class="animate-spin mb-4">
+                        <i class="fas fa-play-circle text-6xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Chargement de la vidéo suivante...</h3>
+                    <div class="w-64 bg-gray-700 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full animate-pulse" style="width: 100%"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function removeTransitionOverlay() {
+            const overlay = document.getElementById('transition-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function showCompletionAnimation() {
+            // Créer l'overlay de fin de série
+            const overlay = document.createElement('div');
+            overlay.id = 'completion-overlay';
+            overlay.className = 'fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center';
+            overlay.innerHTML = `
+                <div class="text-center text-white">
+                    <div class="animate-bounce mb-4">
+                        <i class="fas fa-trophy text-6xl text-yellow-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Félicitations !</h3>
+                    <p class="text-lg mb-4">Vous avez terminé la série</p>
+                    <div class="flex space-x-4 justify-center">
+                        <button onclick="closeCompletion()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors">
+                            Fermer
+                        </button>
+                        <button onclick="location.reload()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg transition-colors">
+                            Recommencer
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function closeCompletion() {
+            const overlay = document.getElementById('completion-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Gestion des événements vidéo
         document.addEventListener('DOMContentLoaded', function() {
                     const video = document.getElementById('mainVideo');
                     const volumeSlider = document.getElementById('volumeSlider');
                     const volumeValue = document.getElementById('volumeValue');
                     const qualitySelect = document.getElementById('qualitySelect');
                     const fullscreenBtn = document.getElementById('fullscreenBtn');
+                    const episodeSearch = document.getElementById('episodeSearch');
+                    const toggleMobileToc = document.getElementById('toggleMobileToc');
+                    const mobileToc = document.getElementById('mobileToc');
                     
                     if (video) {
                         // S'assurer que le son est activé
                         video.muted = false;
                         video.volume = 1.0;
+                        
+                        // Événement de fin de vidéo - transition automatique vers la suivante
+                        video.addEventListener('ended', function() {
+                            console.log('Vidéo terminée - transition vers la suivante');
+                            showTransitionAnimation();
+                            
+                            // Délai pour l'animation puis passage à la vidéo suivante
+                            setTimeout(() => {
+                                playNextVideo();
+                            }, 2000);
+                        });
                         
                         // Contrôle du volume
                         if (volumeSlider && volumeValue) {
@@ -618,6 +887,20 @@ if ($currentVideo && $isLoggedIn) {
                                 }
                             });
                         }
+
+                        // Précédent / Suivant
+                        const prevBtn = document.getElementById('prevBtn');
+                        const nextBtn = document.getElementById('nextBtn');
+                        if (prevBtn) {
+                            prevBtn.addEventListener('click', function() {
+                                playPrevVideo();
+                            });
+                        }
+                        if (nextBtn) {
+                            nextBtn.addEventListener('click', function() {
+                                playNextVideo();
+                            });
+                        }
                         
                         // Protection contre le téléchargement
                         video.addEventListener('loadstart', function() {
@@ -629,7 +912,7 @@ if ($currentVideo && $isLoggedIn) {
                             
                             // Désactiver les raccourcis clavier de téléchargement
         document.addEventListener('keydown', function(e) {
-                                // Bloquer Ctrl+S, Ctrl+Shift+S, F12, Ctrl+U
+                                // Bloquer Ctrl+S, Ctrl+Shift+S, F12, Ctrl+U; Ajout raccourcis ←/→
             if ((e.ctrlKey && e.key === 's') || 
                                     (e.ctrlKey && e.shiftKey && e.key === 'S') ||
                 e.key === 'F12' || 
@@ -637,8 +920,55 @@ if ($currentVideo && $isLoggedIn) {
                 e.preventDefault();
                 return false;
             }
+                                if (e.key === 'ArrowRight') {
+                                    e.preventDefault();
+                                    playNextVideo();
+                                } else if (e.key === 'ArrowLeft') {
+                                    e.preventDefault();
+                                    playPrevVideo();
+            }
                             });
         });
+
+        // Filtrage épisodes
+        (function setupEpisodeFilter(){
+            const input = document.getElementById('episodeSearch');
+            if (!input) return;
+            input.addEventListener('input', function(){
+                const q = this.value.trim().toLowerCase();
+                document.querySelectorAll('.episode-item').forEach(el => {
+                    const title = el.getAttribute('data-title') || '';
+                    el.style.display = title.includes(q) ? '' : 'none';
+                });
+            });
+        })();
+
+        // Mobile TOC toggle
+        (function setupMobileToc(){
+            if (!toggleMobileToc || !mobileToc) return;
+            toggleMobileToc.addEventListener('click', function(){
+                mobileToc.classList.toggle('hidden');
+            });
+        })();
+
+        // Aside comments submit duplicates into main comments list as well
+        (function hookAsideComments(){
+            const submitAside = document.getElementById('submitAside');
+            const inputAside = document.getElementById('commentTextAside');
+            const listAside = document.getElementById('commentsListAside');
+            if (!submitAside || !inputAside || !listAside) return;
+            submitAside.addEventListener('click', function(){
+                const text = (inputAside.value || '').trim();
+                if (!text) return;
+                addComment(text);
+                // Simple clone render also in aside
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-gray-50 rounded border border-gray-200 text-sm';
+                div.textContent = text;
+                listAside.prepend(div);
+                inputAside.value = '';
+            });
+        })();
 
                         // Désactiver la sélection de texte sur la vidéo
                         video.addEventListener('selectstart', function(e) {
@@ -686,214 +1016,13 @@ if ($currentVideo && $isLoggedIn) {
                 video.addEventListener('ended', function() {
                     // Marquer la vidéo comme terminée
                     console.log('Vidéo terminée');
-                    
-                    // Vérifier s'il y a une vidéo suivante
-                    const currentIndex = episodes.findIndex(ep => ep.id == currentVideoId);
-                    if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
-                        const nextVideo = episodes[currentIndex + 1];
-                        
-                        // Afficher l'animation de transition
-                        showTransitionAnimation(nextVideo.title, 15);
-                        
-                        // Passer automatiquement à la vidéo suivante après 15 secondes
-                        setTimeout(() => {
-                            playNextVideo();
-                        }, 15000);
-                } else {
-                        // Fin de la série
-                        showCompletionAnimation();
-                    }
                 });
                 
             }
         });
         
-        // Fonction pour afficher l'animation de transition
-        function showTransitionAnimation(nextTitle, duration) {
-            // Créer l'overlay d'animation
-            const overlay = document.createElement('div');
-            overlay.id = 'transitionOverlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                color: white;
-                font-family: Arial, sans-serif;
-            `;
-            
-            // Contenu de l'animation
-            overlay.innerHTML = `
-                <div style="text-align: center; animation: fadeIn 1s ease-in-out;">
-                    <div style="font-size: 4rem; margin-bottom: 2rem; animation: pulse 2s infinite;">
-                        <i class="fas fa-play-circle"></i>
-                    </div>
-                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; animation: slideInUp 1s ease-out;">
-                        Vidéo terminée !
-                    </h2>
-                    <p style="font-size: 1.5rem; margin-bottom: 2rem; animation: slideInUp 1s ease-out 0.3s both;">
-                        Prochaine vidéo : <strong>${nextTitle}</strong>
-                    </p>
-                    <div style="font-size: 1.2rem; margin-bottom: 2rem; animation: slideInUp 1s ease-out 0.6s both;">
-                        Début automatique dans :
-                    </div>
-                    <div id="countdown" style="font-size: 3rem; font-weight: bold; color: #ffd700; animation: slideInUp 1s ease-out 0.9s both;">
-                        ${duration}
-                    </div>
-                    <div style="margin-top: 2rem; animation: slideInUp 1s ease-out 1.2s both;">
-                        <button onclick="skipTransition()" style="
-                            background: rgba(255,255,255,0.2);
-                            border: 2px solid white;
-                            color: white;
-                            padding: 12px 24px;
-                            border-radius: 25px;
-                            cursor: pointer;
-                            font-size: 1rem;
-                            transition: all 0.3s ease;
-                        " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                            <i class="fas fa-forward mr-2"></i>Passer maintenant
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            // Ajouter les styles CSS pour les animations
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideInUp {
-                    from { 
-                        opacity: 0; 
-                        transform: translateY(30px); 
-                    }
-                    to { 
-                        opacity: 1; 
-                        transform: translateY(0); 
-                    }
-                }
-                @keyframes pulse {
-                    0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.1); }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // Ajouter l'overlay au body
-            document.body.appendChild(overlay);
-            
-            // Compte à rebours
-            let countdown = duration;
-            const countdownElement = document.getElementById('countdown');
-            const countdownInterval = setInterval(() => {
-                countdown--;
-                countdownElement.textContent = countdown;
-                
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    removeTransitionOverlay();
-                }
-            }, 1000);
-            
-            // Stocker l'intervalle pour pouvoir l'arrêter si nécessaire
-            window.transitionCountdown = countdownInterval;
-        }
         
-        // Fonction pour afficher l'animation de fin de série
-        function showCompletionAnimation() {
-            const overlay = document.createElement('div');
-            overlay.id = 'completionOverlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                color: white;
-                font-family: Arial, sans-serif;
-            `;
-            
-            overlay.innerHTML = `
-                <div style="text-align: center; animation: fadeIn 1s ease-in-out;">
-                    <div style="font-size: 5rem; margin-bottom: 2rem; animation: bounce 2s infinite;">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <h2 style="font-size: 3rem; margin-bottom: 1rem; animation: slideInUp 1s ease-out;">
-                        Félicitations !
-                    </h2>
-                    <p style="font-size: 1.5rem; margin-bottom: 2rem; animation: slideInUp 1s ease-out 0.3s both;">
-                        Vous avez terminé la série complète !
-                    </p>
-                    <div style="margin-top: 2rem; animation: slideInUp 1s ease-out 0.6s both;">
-                        <button onclick="closeCompletion()" style="
-                            background: rgba(255,255,255,0.2);
-                            border: 2px solid white;
-                            color: white;
-                            padding: 12px 24px;
-                            border-radius: 25px;
-                            cursor: pointer;
-                            font-size: 1rem;
-                            transition: all 0.3s ease;
-                        " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                            <i class="fas fa-check mr-2"></i>Continuer
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            // Ajouter les styles CSS pour l'animation de fin
-            const style = document.createElement('style');
-            style.textContent += `
-                @keyframes bounce {
-                    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-                    40% { transform: translateY(-20px); }
-                    60% { transform: translateY(-10px); }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            document.body.appendChild(overlay);
-        }
         
-        // Fonction pour passer la transition
-        function skipTransition() {
-            if (window.transitionCountdown) {
-                clearInterval(window.transitionCountdown);
-            }
-            removeTransitionOverlay();
-            playNextVideo();
-        }
-        
-        // Fonction pour fermer l'animation de fin
-        function closeCompletion() {
-            const overlay = document.getElementById('completionOverlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
-        
-        // Fonction pour supprimer l'overlay de transition
-        function removeTransitionOverlay() {
-            const overlay = document.getElementById('transitionOverlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
         
         // Fonction pour ajouter un commentaire
         function addComment(text) {
@@ -935,15 +1064,6 @@ if ($currentVideo && $isLoggedIn) {
             
             // Ajouter le commentaire en haut de la liste
             commentsList.insertBefore(commentDiv, commentsList.firstChild);
-            
-            // Animation d'apparition
-            commentDiv.style.opacity = '0';
-            commentDiv.style.transform = 'translateY(-10px)';
-            setTimeout(() => {
-                commentDiv.style.transition = 'all 0.3s ease';
-                commentDiv.style.opacity = '1';
-                commentDiv.style.transform = 'translateY(0)';
-            }, 100);
         }
     </script>
 </body>

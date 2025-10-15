@@ -36,7 +36,7 @@ $certificationPaths = getCertificationPaths(3);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Académie IA - Plateforme d'apprentissage en Intelligence Artificielle</title>
+    <title>Académie IA - Plateforme d'apprentissage pour la communauté étudiante</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -74,7 +74,7 @@ $certificationPaths = getCertificationPaths(3);
                     Académie IA
                 </h1>
                 <p class="text-xl md:text-2xl mb-8 text-blue-100">
-                    Maîtrisez l'Intelligence Artificielle avec nos cours spécialisés
+                    Accédez à des ressources multidisciplinaires adaptées à tous les étudiants
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="register.php" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
@@ -162,8 +162,8 @@ $certificationPaths = getCertificationPaths(3);
     <section class="py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Certifications IA</h2>
-                <p class="text-gray-600">Obtenez des certifications reconnues dans le domaine de l'IA</p>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Certifications & Parcours</h2>
+                <p class="text-gray-600">Obtenez des certifications reconnues dans plusieurs domaines académiques</p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -246,9 +246,9 @@ $certificationPaths = getCertificationPaths(3);
     <!-- CTA Section -->
     <section class="py-16 bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold mb-4">Prêt à commencer votre voyage en IA ?</h2>
+            <h2 class="text-3xl font-bold mb-4">Prêt à commencer votre parcours d’apprentissage ?</h2>
             <p class="text-xl mb-8 text-indigo-100">
-                Rejoignez des milliers d'étudiants qui apprennent l'Intelligence Artificielle
+                Rejoignez des milliers d'étudiants qui apprennent chaque jour
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="register.php" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">

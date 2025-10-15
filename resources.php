@@ -171,7 +171,7 @@ $typeColors = [
                     <i class="fas fa-user-graduate text-white text-lg"></i>
                 </div>
                 <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo ($isLoggedIn && !empty($user['full_name'])) ? htmlspecialchars($user['full_name']) : 'Invité'; ?></h3>
-                <p class="text-xs text-gray-500">Étudiant IA</p>
+                <p class="text-xs text-gray-500">Étudiant</p>
                 <div class="mt-1">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
                         <i class="fas fa-star mr-1"></i>
@@ -235,7 +235,7 @@ $typeColors = [
                     Centre de Ressources
                 </h1>
                 <p class="text-xs sm:text-sm text-gray-600">
-                    Découvrez notre bibliothèque complète de ressources en Intelligence Artificielle, systèmes embarqués et génie logiciel
+                    Découvrez notre bibliothèque complète de ressources académiques (sciences, droit, informatique, langues, management, etc.)
                 </p>
             </div>
 
@@ -430,15 +430,22 @@ $typeColors = [
                                 if (preg_match('/^(\d+)\.\s*(.+)/', $video['title'] ?? '', $matches)) {
                                     $episodeNumber = intval($matches[1]);
                                     $episodeTitle = trim($matches[2]);
-                                    $seriesName = 'Python pour tous';
-                                    if (!isset($videoSeries[$seriesName])) {
-                                        $videoSeries[$seriesName] = [];
+                                    
+                                    // Filtrer uniquement les vidéos du dossier "python pour tous"
+                                    $fileUrl = $video['file_url'] ?? '';
+                                    if (strpos($fileUrl, 'python pour tous') !== false) {
+                                        $seriesName = 'Python pour tous';
+                                        if (!isset($videoSeries[$seriesName])) {
+                                            $videoSeries[$seriesName] = [];
+                                        }
+                                        $videoSeries[$seriesName][] = [
+                                            'episode' => $episodeNumber,
+                                            'episodeTitle' => $episodeTitle,
+                                            'video' => $video
+                                        ];
+                                    } else {
+                                        $nonSeries[] = $video;
                                     }
-                                    $videoSeries[$seriesName][] = [
-                                        'episode' => $episodeNumber,
-                                        'episodeTitle' => $episodeTitle,
-                                        'video' => $video
-                                    ];
                                 } else {
                                     $nonSeries[] = $video;
                                 }
@@ -446,16 +453,21 @@ $typeColors = [
                             
                             // Ajouter une série pour le dossier devperso (même logique d'affichage qu'une série)
                             $devPersoEpisodes = [];
-                            foreach ($nonSeries as $idx => $video) {
+                            foreach ($typeResources as $idx => $video) {
                                 $path = $video['file_url'] ?? '';
                                 $normalized = str_replace('\\', '/', $path);
                                 if (strpos($normalized, '/videos/devperso/') !== false || strpos($normalized, 'videos/devperso/') !== false) {
+                                    $episodeNumber = 1; // Par défaut
+                                    if (preg_match('/^(\d+)\./', $video['title'] ?? '', $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
                                     $devPersoEpisodes[] = [
-                                        'episode' => $idx + 1,
+                                        'episode' => $episodeNumber,
                                         'episodeTitle' => $video['title'] ?? 'Épisode',
                                         'video' => $video
                                     ];
-                                    unset($nonSeries[$idx]);
                                 }
                             }
                             if (!empty($devPersoEpisodes)) {
@@ -465,23 +477,284 @@ $typeColors = [
                                 $videoSeries['Développement personnel'] = $devPersoEpisodes;
                             }
 
-                            // Ajouter une série pour le dossier cybersecu
+                            // Ajouter une série pour le dossier chimie
+                            $chimieEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/chimie/') !== false || strpos($normalized, 'videos/chimie/') !== false ||
+                                    strpos($normalized, '/videos/chemistry/') !== false || strpos($normalized, 'videos/chemistry/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $chimieEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($chimieEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($chimieEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Chimie'] = $chimieEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier langues
+                            $languesEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/langues/') !== false || strpos($normalized, 'videos/langues/') !== false ||
+                                    strpos($normalized, '/videos/languages/') !== false || strpos($normalized, 'videos/languages/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $languesEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($languesEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($languesEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Langues'] = $languesEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier droit-contrats
+                            $droitContratsEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/droit-contrats/') !== false || strpos($normalized, 'videos/droit-contrats/') !== false ||
+                                    strpos($normalized, '/videos/droit_contrats/') !== false || strpos($normalized, 'videos/droit_contrats/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $droitContratsEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($droitContratsEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($droitContratsEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Droit des contrats'] = $droitContratsEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier marketing
+                            $marketingEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/marketing/') !== false || strpos($normalized, 'videos/marketing/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $marketingEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($marketingEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($marketingEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Marketing'] = $marketingEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier leadership
+                            $leadershipEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/leadership/') !== false || strpos($normalized, 'videos/leadership/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $leadershipEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($leadershipEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($leadershipEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Leadership'] = $leadershipEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier communication
+                            $communicationEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/communication/') !== false || strpos($normalized, 'videos/communication/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $communicationEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($communicationEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($communicationEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Communication'] = $communicationEpisodes;
+                            }
+
+                            // Créer des séries complètes séparées pour l'informatique
+                            $informatiqueSeries = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/informatique/') !== false || strpos($normalized, 'videos/informatique/') !== false ||
+                                    strpos($normalized, '/videos/info/') !== false || strpos($normalized, 'videos/info/') !== false) {
+                                    
+                                    $title = $video['title'] ?? '';
+                                    $seriesName = null; // Pas de série par défaut
+                                    
+                                    // Détecter la série selon le chemin
+                                    if (strpos($normalized, '/programmation/') !== false || strpos($normalized, '/programming/') !== false) {
+                                        $seriesName = null; // Exclure la série Programmation
+                                    } elseif (strpos($normalized, '/reseaux/') !== false || strpos($normalized, '/networks/') !== false) {
+                                        $seriesName = 'Réseaux informatiques';
+                                    } elseif (strpos($normalized, '/bases-donnees/') !== false || strpos($normalized, '/database/') !== false) {
+                                        $seriesName = 'Bases de données';
+                                    } elseif (strpos($normalized, '/systemes/') !== false || strpos($normalized, '/systems/') !== false) {
+                                        $seriesName = 'Systèmes d\'exploitation';
+                                    } elseif (strpos($normalized, '/securite/') !== false || strpos($normalized, '/security/') !== false) {
+                                        $seriesName = null; // Exclure la série Sécurité informatique
+                                    }
+                                    
+                                    $episodeNumber = 1; // Par défaut
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    // Ne pas ajouter à une série si $seriesName est null
+                                    if ($seriesName !== null) {
+                                        if (!isset($informatiqueSeries[$seriesName])) {
+                                            $informatiqueSeries[$seriesName] = [];
+                                        }
+                                        
+                                        $informatiqueSeries[$seriesName][] = [
+                                            'episode' => $episodeNumber,
+                                            'episodeTitle' => $title,
+                                            'video' => $video
+                                        ];
+                                    }
+                                }
+                            }
+                            
+                            // Trier chaque série et les ajouter comme séries séparées
+                            if (!empty($informatiqueSeries)) {
+                                foreach ($informatiqueSeries as $seriesName => $episodes) {
+                                    usort($informatiqueSeries[$seriesName], function($a, $b) { 
+                                        return $a['episode'] - $b['episode']; 
+                                    });
+                                    $videoSeries[$seriesName] = $informatiqueSeries[$seriesName];
+                                }
+                            }
+
+                            // Ajouter une série pour le dossier cybersecu avec ordre séquentiel
                             $cyberSecEpisodes = [];
-                            foreach ($nonSeries as $idx => $video) {
+                            foreach ($typeResources as $idx => $video) {
                                 $path = $video['file_url'] ?? '';
                                 $normalized = str_replace('\\', '/', $path);
                                 if (strpos($normalized, '/videos/cybersecu/') !== false || strpos($normalized, 'videos/cybersecu/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode selon l'ordre séquentiel
+                                    if (preg_match('/CompTIA Security\(SY0-601\)\s*(\d+)/', $title, $matches)) {
+                                        // Vidéos CompTIA Security(SY0-601) 1, 2, 3, 4, 5
+                                        $episodeNumber = intval($matches[1]);
+                                    } elseif (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        // Vidéos numérotées directement 6, 7, 8, etc.
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        // Pour les autres vidéos, utiliser l'index + 1
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
                                     $cyberSecEpisodes[] = [
-                                        'episode' => $idx + 1,
-                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
                                         'video' => $video
                                     ];
-                                    unset($nonSeries[$idx]);
                                 }
                             }
                             if (!empty($cyberSecEpisodes)) {
-                                $cyberSecEpisodes = array_values($cyberSecEpisodes);
-                                usort($cyberSecEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                // Trier par numéro d'épisode pour respecter l'ordre séquentiel
+                                usort($cyberSecEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
                                 $videoSeries['Cybersécurité'] = $cyberSecEpisodes;
                             }
 
@@ -505,13 +778,13 @@ $typeColors = [
                                 $videoSeries['Design'] = $designEpisodes;
                             }
 
-                            // Ajouter une série pour le dossier droit
-                            $droitEpisodes = [];
+                            // Ajouter une série pour le dossier économie
+                            $economieEpisodes = [];
                             foreach ($nonSeries as $idx => $video) {
                                 $path = $video['file_url'] ?? '';
                                 $normalized = str_replace('\\', '/', $path);
-                                if (strpos($normalized, '/videos/droit/') !== false || strpos($normalized, 'videos/droit/') !== false) {
-                                    $droitEpisodes[] = [
+                                if (strpos($normalized, '/videos/economie/') !== false || strpos($normalized, 'videos/economie/') !== false) {
+                                    $economieEpisodes[] = [
                                         'episode' => $idx + 1,
                                         'episodeTitle' => $video['title'] ?? 'Épisode',
                                         'video' => $video
@@ -519,46 +792,432 @@ $typeColors = [
                                     unset($nonSeries[$idx]);
                                 }
                             }
-                            if (!empty($droitEpisodes)) {
-                                $droitEpisodes = array_values($droitEpisodes);
-                                usort($droitEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
-                                $videoSeries['Droit'] = $droitEpisodes;
+                            if (!empty($economieEpisodes)) {
+                                $economieEpisodes = array_values($economieEpisodes);
+                                usort($economieEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Économie & Management'] = $economieEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier science-medicale
+                            $scienceMedicalEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/science-medicale/') !== false || strpos($normalized, 'videos/science-medicale/') !== false) {
+                                    $scienceMedicalEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($scienceMedicalEpisodes)) {
+                                $scienceMedicalEpisodes = array_values($scienceMedicalEpisodes);
+                                usort($scienceMedicalEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Santé et Médecine'] = $scienceMedicalEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier environnement
+                            $environnementEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/environnement/') !== false || strpos($normalized, 'videos/environnement/') !== false) {
+                                    $environnementEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($environnementEpisodes)) {
+                                $environnementEpisodes = array_values($environnementEpisodes);
+                                usort($environnementEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Environnement'] = $environnementEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier intelligence-artificielle
+                            $aiEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/ia/') !== false || strpos($normalized, 'videos/ia/') !== false || 
+                                    strpos($normalized, '/videos/ai/') !== false || strpos($normalized, 'videos/ai/') !== false ||
+                                    strpos($normalized, '/videos/intelligence-artificielle/') !== false || strpos($normalized, 'videos/intelligence-artificielle/') !== false) {
+                                    $aiEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($aiEpisodes)) {
+                                $aiEpisodes = array_values($aiEpisodes);
+                                usort($aiEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Intelligence Artificielle'] = $aiEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier machine-learning
+                            $mlEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/ml/') !== false || strpos($normalized, 'videos/ml/') !== false ||
+                                    strpos($normalized, '/videos/machine-learning/') !== false || strpos($normalized, 'videos/machine-learning/') !== false) {
+                                    $mlEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($mlEpisodes)) {
+                                $mlEpisodes = array_values($mlEpisodes);
+                                usort($mlEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Machine Learning'] = $mlEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier programmation
+                            $programmingEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/programmation/') !== false || strpos($normalized, 'videos/programmation/') !== false ||
+                                    strpos($normalized, '/videos/programming/') !== false || strpos($normalized, 'videos/programming/') !== false ||
+                                    strpos($normalized, '/videos/code/') !== false || strpos($normalized, 'videos/code/') !== false) {
+                                    $programmingEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            // Série Programmation exclue - ne pas l'ajouter
+
+                            // Ajouter une série pour le dossier data-science
+                            $dataScienceEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/data-science/') !== false || strpos($normalized, 'videos/data-science/') !== false ||
+                                    strpos($normalized, '/videos/datascience/') !== false || strpos($normalized, 'videos/datascience/') !== false) {
+                                    $dataScienceEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($dataScienceEpisodes)) {
+                                $dataScienceEpisodes = array_values($dataScienceEpisodes);
+                                usort($dataScienceEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Data Science'] = $dataScienceEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier web-development
+                            $webDevEpisodes = [];
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/web/') !== false || strpos($normalized, 'videos/web/') !== false ||
+                                    strpos($normalized, '/videos/web-development/') !== false || strpos($normalized, 'videos/web-development/') !== false ||
+                                    strpos($normalized, '/videos/frontend/') !== false || strpos($normalized, 'videos/frontend/') !== false ||
+                                    strpos($normalized, '/videos/backend/') !== false || strpos($normalized, 'videos/backend/') !== false) {
+                                    $webDevEpisodes[] = [
+                                        'episode' => $idx + 1,
+                                        'episodeTitle' => $video['title'] ?? 'Épisode',
+                                        'video' => $video
+                                    ];
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($webDevEpisodes)) {
+                                $webDevEpisodes = array_values($webDevEpisodes);
+                                usort($webDevEpisodes, function($a, $b) { return $a['episode'] - $b['episode']; });
+                                $videoSeries['Développement Web'] = $webDevEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier chimie
+                            $chimieEpisodes = [];
+                            foreach ($typeResources as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/chimie/') !== false || strpos($normalized, 'videos/chimie/') !== false ||
+                                    strpos($normalized, '/videos/chemistry/') !== false || strpos($normalized, 'videos/chemistry/') !== false) {
+                                    $title = $video['title'] ?? '';
+                                    $episodeNumber = 1; // Par défaut
+                                    
+                                    // Détecter le numéro d'épisode
+                                    if (preg_match('/^(\d+)\./', $title, $matches)) {
+                                        $episodeNumber = intval($matches[1]);
+                                    } else {
+                                        $episodeNumber = $idx + 1;
+                                    }
+                                    
+                                    $chimieEpisodes[] = [
+                                        'episode' => $episodeNumber,
+                                        'episodeTitle' => $title,
+                                        'video' => $video
+                                    ];
+                                }
+                            }
+                            if (!empty($chimieEpisodes)) {
+                                // Trier par numéro d'épisode
+                                usort($chimieEpisodes, function($a, $b) { 
+                                    return $a['episode'] - $b['episode']; 
+                                });
+                                $videoSeries['Chimie'] = $chimieEpisodes;
+                            }
+
+                            // Ajouter une série pour le dossier droit avec ordre personnalisé
+                            $droitItems = [];
+                            $featured = null; // La vidéo avec le titre spécifique en premier
+                            foreach ($nonSeries as $idx => $video) {
+                                $path = $video['file_url'] ?? '';
+                                $normalized = str_replace('\\', '/', $path);
+                                if (strpos($normalized, '/videos/droit/') !== false || strpos($normalized, 'videos/droit/') !== false) {
+                                    $basename = strtolower(basename($normalized));
+                                    // Détecter la vidéo "Les fondements ... droit numérique.mp4" comme première
+                                    if ($basename === strtolower('Les fondements de la propriété intellectuelle et du droit numérique.mp4')) {
+                                        $featured = [
+                                            'episodeTitle' => $video['title'] ?? 'Épisode',
+                                            'video' => $video
+                                        ];
+                                    } else {
+                                        // Essayer de lire un index numérique depuis le nom de fichier (ex: 0.mp4, 1.mp4, 2.mp4)
+                                        $nameNoExt = pathinfo($basename, PATHINFO_FILENAME);
+                                        $num = is_numeric($nameNoExt) ? (int)$nameNoExt : PHP_INT_MAX; // non numéros à la fin
+                                        $droitItems[] = [
+                                            'num' => $num,
+                                            'episodeTitle' => $video['title'] ?? 'Épisode',
+                                            'video' => $video
+                                        ];
+                                    }
+                                    unset($nonSeries[$idx]);
+                                }
+                            }
+                            if (!empty($featured) || !empty($droitItems)) {
+                                // Trier les éléments numériques croissants
+                                usort($droitItems, function($a, $b) { return $a['num'] <=> $b['num']; });
+                                $episodeCounter = 1;
+                                $droitEpisodesOrdered = [];
+                                if (!empty($featured)) {
+                                    $droitEpisodesOrdered[] = [
+                                        'episode' => $episodeCounter++,
+                                        'episodeTitle' => $featured['episodeTitle'],
+                                        'video' => $featured['video']
+                                    ];
+                                }
+                                foreach ($droitItems as $item) {
+                                    $droitEpisodesOrdered[] = [
+                                        'episode' => $episodeCounter++,
+                                        'episodeTitle' => $item['episodeTitle'],
+                                        'video' => $item['video']
+                                    ];
+                                }
+                                $videoSeries['Droit'] = $droitEpisodesOrdered;
                             }
                             foreach ($videoSeries as $seriesName => $episodes) {
-                                usort($videoSeries[$seriesName], function($a, $b) { return $a['episode'] - $b['episode']; });
+                                // Trier toutes les séries de la même manière
+                                if (is_array($episodes) && isset($episodes[0]) && is_array($episodes[0]) && isset($episodes[0]['episode'])) {
+                                    usort($videoSeries[$seriesName], function($a, $b) { 
+                                        return $a['episode'] - $b['episode']; 
+                                    });
+                                }
+                            }
+                            
+                            // Trier les séries par ordre alphabétique
+                            ksort($videoSeries);
+
+                            // Calculer le nombre réel d'épisodes par série (DB + fichiers du dossier)
+                            $seriesEpisodeCounts = [];
+                            $seriesFolderMap = [
+                                'Droit' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'droit',
+                                'Développement personnel' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'devperso',
+                                'Cybersécurité' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'cybersecu',
+                                'Design' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'Design',
+                                'Économie & Management' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'economie',
+                                'Santé et Médecine' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'science-medicale',
+                                'Environnement' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'environnement',
+                                'Intelligence Artificielle' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'ia',
+                                'Machine Learning' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'ml',
+                                'Programmation' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'programmation',
+                                'Data Science' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'data-science',
+                                'Développement Web' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'web',
+                                'Chimie' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'chimie',
+                                'Langues' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'langues',
+                                'Droit des contrats' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'droit-contrats',
+                                'Marketing' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'marketing',
+                                'Leadership' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'leadership',
+                                'Communication' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'communication',
+                                'Informatique' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique',
+                                'Informatique générale' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique',
+                                'Programmation' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique' . DIRECTORY_SEPARATOR . 'programmation',
+                                'Réseaux informatiques' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique' . DIRECTORY_SEPARATOR . 'reseaux',
+                                'Bases de données' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique' . DIRECTORY_SEPARATOR . 'bases-donnees',
+                                'Systèmes d\'exploitation' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique' . DIRECTORY_SEPARATOR . 'systemes',
+                                'Sécurité informatique' => __DIR__ . DIRECTORY_SEPARATOR . 'videos' . DIRECTORY_SEPARATOR . 'informatique' . DIRECTORY_SEPARATOR . 'securite',
+                            ];
+                            $videoExtensions = ['mp4','mkv','webm','mov','avi'];
+                            foreach ($videoSeries as $seriesName => $episodes) {
+                                // Pour toutes les séries, compter normalement
+                                $count = count($episodes);
+                                if (isset($seriesFolderMap[$seriesName]) && is_dir($seriesFolderMap[$seriesName])) {
+                                    $fsCount = 0;
+                                    foreach (scandir($seriesFolderMap[$seriesName]) as $file) {
+                                        if ($file === '.' || $file === '..') { continue; }
+                                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                        if (in_array($ext, $videoExtensions, true)) {
+                                            $fsCount++;
+                                        }
+                                    }
+                                    if ($fsCount > $count) {
+                                        $count = $fsCount;
+                                    }
+                                }
+                                $seriesEpisodeCounts[$seriesName] = $count;
                             }
                             ?>
                             <?php if (!empty($videoSeries)): ?>
+                            <?php
+                                // Cache pour vérification de présence de vidéos réelles dans un dossier
+                                $dirHasVideoCache = [];
+                                $hasRealVideos = function($dir) use (&$dirHasVideoCache) {
+                                    if (!is_string($dir) || $dir === '' || !is_dir($dir)) { return false; }
+                                    if (isset($dirHasVideoCache[$dir])) { return $dirHasVideoCache[$dir]; }
+                                    $videoExtensions = ['mp4','webm','ogg','mov','mkv'];
+                                    $found = false;
+                                    foreach (scandir($dir) as $file) {
+                                        if ($file === '.' || $file === '..') { continue; }
+                                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                        if (in_array($ext, $videoExtensions, true)) { $found = true; break; }
+                                    }
+                                    $dirHasVideoCache[$dir] = $found;
+                                    return $found;
+                                };
+                            ?>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
                                 <?php foreach ($videoSeries as $seriesName => $episodes): ?>
-                                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer" 
-                                     onclick="window.location.href='mediatheque.php?series=<?php echo urlencode($seriesName); ?>&video_id=<?php echo $episodes[0]['video']['id']; ?>'">
-                                    <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
-                                        <div class="text-center text-white">
-                                            <i class="fas fa-play-circle text-5xl mb-3"></i>
-                                            <p class="text-sm font-medium"><?php echo count($episodes); ?> épisode(s)</p>
+                                    <?php
+                                    // Détecter si c'est une série fictive (pas de fichiers réels)
+                                    $isFictional = false;
+                                if (isset($seriesFolderMap[$seriesName])) {
+                                    $dir = $seriesFolderMap[$seriesName];
+                                    $hasRealFiles = $hasRealVideos($dir);
+                                    $isFictional = !$hasRealFiles && count($episodes) > 0;
+                                }
+                                    ?>
+                                    
+                                    <!-- Série complète -->
+                                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer relative" 
+                                         onclick="window.location.href='mediatheque.php?series=<?php echo urlencode($seriesName); ?>';">
+                                        
+                                        
+                                        <?php if ($isFictional): ?>
+                                        <!-- Design simplifié pour les séries fictives -->
+                                        <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center opacity-30">
+                                            <div class="text-center text-white">
+                                                <?php if ($seriesName === 'Chimie' || $seriesName === 'Langues'): ?>
+                                                <div class="animate-pulse mb-3">
+                                                    <i class="fas fa-clock text-5xl text-yellow-400"></i>
+                                                </div>
+                                                <p class="text-sm font-medium">Pending</p>
+                                                <?php else: ?>
+                                                <div class="animate-spin mb-3">
+                                                    <i class="fas fa-tools text-5xl"></i>
+                                                </div>
+                                                <p class="text-sm font-medium">Ajout des formations en cours</p>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="absolute top-3 right-3 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded font-medium">
+                                                <?php 
+                                                $totalDuration = 0;
+                                                foreach ($episodes as $episode) {
+                                                    $duration = $episode['video']['duration'] ?? null;
+                                                    if ($duration) {
+                                                        $totalDuration += intval($duration);
+                                                    }
+                                                }
+                                                echo $totalDuration > 0 ? $totalDuration . ' min' : (($seriesEpisodeCounts[$seriesName] ?? count($episodes)) * 15) . ' min';
+                                                ?>
+                                            </div>
                                         </div>
-                                        <div class="absolute top-3 right-3 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded font-medium">
-                                            <?php echo count($episodes) * 15; ?> min
+                                        <div class="p-4">
+                                            <h3 class="font-semibold text-gray-900 text-lg mb-2 line-clamp-2"><?php echo htmlspecialchars($seriesName); ?></h3>
+                                            <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                                <!-- description removed per request -->
+                                            </p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                                                <span class="flex items-center"><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($episodes[0]['video']['author']); ?></span>
+                                                <span class="flex items-center"><i class="fas fa-eye mr-1"></i>
+                                                    <?php $totalViews = 0; foreach ($episodes as $episode) { $totalViews += ($episode['video']['view_count'] ?? 0); } echo number_format($totalViews); ?> vues
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center justify-between mb-4">
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"><?php echo ucfirst($episodes[0]['video']['category']); ?></span>
+                                            </div>
+                                            <div class="w-full bg-blue-600 text-white text-center py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-medium">
+                                                <i class="fas fa-eye mr-2"></i>
+                                                Voir plus
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="p-4">
-                                        <h3 class="font-semibold text-gray-900 text-lg mb-2 line-clamp-2"><?php echo htmlspecialchars($seriesName); ?></h3>
-                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">Série complète avec <?php echo count($episodes); ?> épisode(s) pour apprendre progressivement.</p>
-                                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
-                                            <span class="flex items-center"><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($episodes[0]['video']['author']); ?></span>
-                                            <span class="flex items-center"><i class="fas fa-eye mr-1"></i>
-                                                <?php $totalViews = 0; foreach ($episodes as $episode) { $totalViews += ($episode['video']['view_count'] ?? 0); } echo number_format($totalViews); ?> vues
-                                            </span>
+                                        <?php else: ?>
+                                        <!-- Design complet pour les séries réelles -->
+                                        <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center overflow-hidden">
+                                            <?php 
+                                            // Vignette extraite du premier épisode s'il existe
+                                            $first = $episodes[0]['video'] ?? null;
+                                            $firstId = $first['id'] ?? null;
+                                            $thumbId = 'thumb_' . md5($seriesName);
+                                            // Slug pour fallback d'image statique par série
+                                            $seriesSlug = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $seriesName));
+                                            $seriesSlug = preg_replace('/[^a-z0-9]+/', '-', $seriesSlug);
+                                            $seriesSlug = trim($seriesSlug, '-');
+                                            ?>
+                                            <img id="<?php echo $thumbId; ?>" data-resource-id="<?php echo (int)$firstId; ?>" alt="Aperçu" class="absolute inset-0 w-full h-full object-cover js-thumb" style="opacity:0; transition: opacity 200ms;" loading="lazy"
+                                                 src="<?php echo $firstId ? ('thumbnail.php?id=' . (int)$firstId) : '' ; ?>"
+                                                 data-fallback1="<?php echo 'images/series/' . $seriesSlug . '.jpg'; ?>"
+                                                 data-fallback2="images/series/default.jpg"
+                                            />
+                                            <div class="absolute top-3 right-3 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded font-medium">
+                                                <?php 
+                                                $totalDuration = 0;
+                                                foreach ($episodes as $episode) {
+                                                    $duration = $episode['video']['duration'] ?? null;
+                                                    if ($duration) {
+                                                        $totalDuration += intval($duration);
+                                                    }
+                                                }
+                                                echo $totalDuration > 0 ? $totalDuration . ' min' : (($seriesEpisodeCounts[$seriesName] ?? count($episodes)) * 15) . ' min';
+                                                ?>
+                                            </div>
                                         </div>
-                                        <div class="flex items-center justify-between mb-4">
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"><?php echo ucfirst($episodes[0]['video']['category']); ?></span>
-                                            <span class="text-xs text-gray-500 font-medium">Débutant</span>
+                                        <div class="p-4">
+                                            <h3 class="font-semibold text-gray-900 text-lg mb-2 line-clamp-2"><?php echo htmlspecialchars($seriesName); ?></h3>
+                                            <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                                <!-- description removed per request -->
+                                            </p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                                                <span class="flex items-center"><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($episodes[0]['video']['author']); ?></span>
+                                                <span class="flex items-center"><i class="fas fa-eye mr-1"></i>
+                                                    <?php $totalViews = 0; foreach ($episodes as $episode) { $totalViews += ($episode['video']['view_count'] ?? 0); } echo number_format($totalViews); ?> vues
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center justify-between mb-4">
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"><?php echo ucfirst($episodes[0]['video']['category']); ?></span>
+                                            </div>
+                                            <div class="w-full bg-blue-600 text-white text-center py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-medium">
+                                                <i class="fas fa-eye mr-2"></i>
+                                                Voir plus
+                                            </div>
                                         </div>
-                                        <div class="w-full bg-blue-600 text-white text-center py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-medium">
-                                            <i class="fas fa-play mr-2"></i>Commencer le cours
-                                        </div>
-                                    </div>
+                                        <?php endif; ?>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
@@ -566,60 +1225,58 @@ $typeColors = [
 
                             <?php 
                             // 2) Regrouper les autres vidéos par dossier
-                            $videosByFolder = [];
-                            foreach ($nonSeries as $video) {
-                                $path = $video['file_url'] ?? '';
-                                $folderName = 'Autres';
-                                if (!empty($path)) {
-                                    $normalized = str_replace('\\', '/', $path);
-                                    $parts = explode('/', $normalized);
-                                    $idx = array_search('videos', $parts);
-                                    if ($idx !== false && isset($parts[$idx + 1])) {
-                                        $folderName = $parts[$idx + 1];
-                                    } else {
-                                        $dirParts = explode('/', trim(dirname($normalized)));
-                                        $last = end($dirParts);
-                                        if (!empty($last) && $last !== '.' && $last !== '/') {
-                                            $folderName = $last;
-                                        }
-                                    }
-                                }
-                                $videosByFolder[$folderName][] = $video;
-                            }
                             ?>
-                            <?php foreach ($videosByFolder as $folder => $videos): ?>
-                                <div class="mb-6">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h3 class="text-lg font-semibold text-gray-900">
-                                            <i class="fas fa-folder-open text-gray-500 mr-2"></i><?php echo htmlspecialchars(ucfirst($folder)); ?>
-                                        </h3>
-                                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 border"><?php echo count($videos); ?> vidéo(s)</span>
+                            
+                            <!-- 4 cartes "Incoming" -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6">
+                                <!-- Carte 1: Formation Avancée -->
+                                <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-all duration-200">
+                                    <div class="animate-pulse mb-4">
+                                        <i class="fas fa-graduation-cap text-5xl text-blue-400"></i>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                        <?php foreach ($videos as $resource): ?>
-                                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200">
-                                            <div class="relative h-48 bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                                                <div class="text-center text-white">
-                                                    <i class="fas fa-video text-4xl mb-2"></i>
-                                                    <p class="text-sm font-medium">Vidéo</p>
-                                                </div>
-                                            </div>
-                                            <div class="p-4">
-                                                <h3 class="font-semibold text-gray-900 text-lg mb-2 line-clamp-2"><?php echo htmlspecialchars($resource['title']); ?></h3>
-                                                <p class="text-sm text-gray-600 mb-3 line-clamp-2"><?php echo htmlspecialchars(substr($resource['description'], 0, 100)) . '...'; ?></p>
-                                                <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
-                                                    <span class="flex items-center"><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($resource['author']); ?></span>
-                                                    <span class="flex items-center"><i class="fas fa-eye mr-1"></i><?php echo isset($resource['view_count']) ? number_format($resource['view_count']) : '0'; ?> vues</span>
-                                                </div>
-                                                <a href="resource.php?id=<?php echo $resource['id']; ?>" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-medium">
-                                                    <i class="fas fa-play mr-2"></i>Regarder
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Formation Avancée</h3>
+                                    <p class="text-sm text-gray-500 mb-4">Contenu en préparation</p>
+                                    <div class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium inline-block">
+                                        <i class="fas fa-clock mr-1"></i>Incoming
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
+
+                                <!-- Carte 2: Certification -->
+                                <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-all duration-200">
+                                    <div class="animate-pulse mb-4">
+                                        <i class="fas fa-certificate text-5xl text-green-400"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Certification</h3>
+                                    <p class="text-sm text-gray-500 mb-4">Programme en développement</p>
+                                    <div class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium inline-block">
+                                        <i class="fas fa-clock mr-1"></i>Incoming
+                                    </div>
+                                </div>
+
+                                <!-- Carte 3: Projet Pratique -->
+                                <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-all duration-200">
+                                    <div class="animate-pulse mb-4">
+                                        <i class="fas fa-project-diagram text-5xl text-purple-400"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Projet Pratique</h3>
+                                    <p class="text-sm text-gray-500 mb-4">Exercices en cours</p>
+                                    <div class="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium inline-block">
+                                        <i class="fas fa-clock mr-1"></i>Incoming
+                                    </div>
+                                </div>
+
+                                <!-- Carte 4: Workshop -->
+                                <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 transition-all duration-200">
+                                    <div class="animate-pulse mb-4">
+                                        <i class="fas fa-users text-5xl text-orange-400"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Workshop</h3>
+                                    <p class="text-sm text-gray-500 mb-4">Session interactive</p>
+                                    <div class="bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-medium inline-block">
+                                        <i class="fas fa-clock mr-1"></i>Incoming
+                                    </div>
+                                </div>
+                            </div>
                             
                         <?php else: ?>
                             <!-- Affichage normal pour les autres types -->
@@ -678,6 +1335,76 @@ $typeColors = [
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
+                            <script>
+                            (function(){
+                                // Lazy init vignettes via IntersectionObserver
+                                const initThumb = function(img){
+                                    const setFallback = function(){
+                                        const fb1 = img.getAttribute('data-fallback1');
+                                        const fb2 = img.getAttribute('data-fallback2');
+                                        const test = new Image();
+                                        test.onload = function(){ img.src = fb1; img.style.opacity = 1; img.dataset.ready = '1'; };
+                                        test.onerror = function(){ if (fb2) { img.src = fb2; img.style.opacity = 1; img.dataset.ready = '1'; } else { img.style.display = 'none'; } };
+                                        test.src = fb1;
+                                    };
+                                    img.onerror = function(){ setFallback(); };
+                                    img.onload = function(){ if (!img.dataset.ready) { img.style.opacity = 1; img.dataset.ready = '1'; } };
+                                    const id = img.getAttribute('data-resource-id');
+                                    if (!id) return;
+                                    const video = document.createElement('video');
+                                    video.muted = true;
+                                    video.preload = 'metadata';
+                                    video.src = 'video_stream.php?id=' + encodeURIComponent(id);
+                                    const capture = function(){
+                                        try {
+                                            const canvas = document.createElement('canvas');
+                                            const w = video.videoWidth || 640;
+                                            const h = video.videoHeight || 360;
+                                            canvas.width = w;
+                                            canvas.height = h;
+                                            const ctx = canvas.getContext('2d');
+                                            ctx.drawImage(video, 0, 0, w, h);
+                                            const url = canvas.toDataURL('image/jpeg', 0.7);
+                                            if (url && url.length > 32 && (!img.complete || img.naturalWidth === 0)) {
+                                                img.src = url;
+                                                img.style.opacity = 1;
+                                                img.dataset.ready = '1';
+                                            }
+                                        } catch(e) {
+                                            // fallback: laisser le gradient
+                                        }
+                                    };
+                                    // Fallback de sécurité: si rien après 2s, masquer l'image pour laisser le gradient
+                                    const timeoutId = setTimeout(function(){
+                                        if (!img.dataset.ready) {
+                                            img.style.display = 'none';
+                                        }
+                                    }, 2000);
+                                    video.addEventListener('error', function(){
+                                        img.style.display = 'none';
+                                        clearTimeout(timeoutId);
+                                    }, { once: true });
+                                    video.addEventListener('loadedmetadata', function(){
+                                        try { video.currentTime = 0.1; } catch(e) { /* ignore */ }
+                                    }, { once: true });
+                                    video.addEventListener('seeked', function(){ capture(); clearTimeout(timeoutId); }, { once: true });
+                                };
+                                const thumbs = document.querySelectorAll('.js-thumb');
+                                if ('IntersectionObserver' in window) {
+                                    const observer = new IntersectionObserver((entries)=>{
+                                        entries.forEach(e=>{
+                                            if (e.isIntersecting) {
+                                                observer.unobserve(e.target);
+                                                initThumb(e.target);
+                                            }
+                                        });
+                                    }, { rootMargin: '200px' });
+                                    thumbs.forEach(img=>observer.observe(img));
+                                } else {
+                                    thumbs.forEach(img=>initThumb(img));
+                                }
+                            })();
+                            </script>
                     </div>
                 </div>
                 <?php endforeach; ?>

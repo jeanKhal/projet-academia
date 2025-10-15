@@ -42,79 +42,66 @@ $icon_inactive_classes = 'text-gray-500 group-hover:text-gray-700';
     }
 </style>
 <!-- Desktop sidebar -->
-<div class="hidden md:block w-48 bg-white shadow-lg overflow-y-scroll relative h-[calc(100vh-4rem-1.5rem)] border-r border-gray-200 sidebar-scroll" style="scrollbar-width: thin; scrollbar-color: #cbd5e0 #f7fafc;">
-    <div class="p-3 md:p-4">
-        <!-- En-tête du sidebar -->
-        <div class="mb-4">
-            <h2 class="text-sm font-semibold text-gray-800 mb-1">Administration</h2>
-            <div class="w-6 h-0.5 bg-red-500 rounded"></div>
+<div class="hidden md:block w-64 bg-white shadow-md border-r border-gray-200 rounded-r-xl fixed left-0 top-16 h-[calc(100vh-4rem-1.5rem)] z-30">
+    <div class="px-3 pt-3 pb-3 h-full overflow-y-auto">
+        <!-- Profil administrateur -->
+        <div class="text-center mb-3">
+            <div class="w-14 h-14 bg-gradient-to-r from-red-600 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
+                <i class="fas fa-user-shield text-white text-lg"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></h3>
+            <p class="text-xs text-gray-500">Administrateur</p>
         </div>
         
-        <nav class="space-y-1">
-            <a href="dashboard.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('dashboard', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-tachometer-alt w-4 <?php echo isActivePage('dashboard', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Dashboard</span>
-                <?php if (isActivePage('dashboard', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+        <!-- Navigation -->
+        <nav class="space-y-1 mb-0">
+            <a href="dashboard.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('dashboard', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-tachometer-alt mr-2.5 w-4 <?php echo isActivePage('dashboard', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Tableau de bord
             </a>
-            
-            <a href="users.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('users', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-users w-4 <?php echo isActivePage('users', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Utilisateurs</span>
-                <?php if (isActivePage('users', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+            <a href="users.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('users', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-users mr-2.5 w-4 <?php echo isActivePage('users', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Utilisateurs
             </a>
-            
-            <a href="courses.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('courses', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-graduation-cap w-4 <?php echo isActivePage('courses', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Cours</span>
-                <?php if (isActivePage('courses', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+            <a href="courses.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('courses', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-graduation-cap mr-2.5 w-4 <?php echo isActivePage('courses', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Cours
             </a>
-            
-            <a href="resources.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('resources', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-book w-4 <?php echo isActivePage('resources', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Ressources</span>
-                <?php if (isActivePage('resources', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+            <a href="resources.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('resources', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-book mr-2.5 w-4 <?php echo isActivePage('resources', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Ressources
             </a>
-            
-            <a href="certifications.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('certifications', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-certificate w-4 <?php echo isActivePage('certifications', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Certifications</span>
-                <?php if (isActivePage('certifications', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+            <a href="certifications.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('certifications', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-certificate mr-2.5 w-4 <?php echo isActivePage('certifications', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Certifications
             </a>
-            
-            <a href="forum.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('forum', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-comments w-4 <?php echo isActivePage('forum', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Modération Forum</span>
-                <?php if (isActivePage('forum', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+            <a href="forum.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('forum', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-comments mr-2.5 w-4 <?php echo isActivePage('forum', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Modération Forum
             </a>
-            
-            <a href="settings.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg text-xs transition-all duration-200 <?php echo isActivePage('settings', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-cog w-4 <?php echo isActivePage('settings', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Paramètres</span>
-                <?php if (isActivePage('settings', $current_page, $current_path)): ?>
-                    <div class="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                <?php endif; ?>
+            <a href="settings.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('settings', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-cog mr-2.5 w-4 <?php echo isActivePage('settings', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Paramètres
             </a>
         </nav>
         
-        <!-- Séparateur -->
-        <div class="my-6 border-t border-gray-200"></div>
+        <!-- Actions rapides -->
+        <div class="mt-6 space-y-2">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Actions</div>
+            <a href="users.php" class="flex items-center px-3 py-2 text-xs text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <i class="fas fa-user-plus mr-2 w-3"></i>
+                Ajouter un utilisateur
+            </a>
+            <a href="settings.php" class="flex items-center px-3 py-2 text-xs text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <i class="fas fa-cog mr-2 w-3"></i>
+                Configuration système
+            </a>
+        </div>
         
         <!-- Lien de retour -->
-        <div class="mt-4">
-            <a href="../index.php" class="flex items-center space-x-3 p-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
-                <i class="fas fa-arrow-left w-5"></i>
+        <div class="mt-6">
+            <a href="../index.php" class="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-lg">
+                <i class="fas fa-arrow-left mr-2 w-4"></i>
                 <span>Retour au site</span>
             </a>
         </div>
@@ -124,48 +111,67 @@ $icon_inactive_classes = 'text-gray-500 group-hover:text-gray-700';
 <!-- Mobile sidebar drawer -->
 <div id="adminMobileBackdrop" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50"></div>
 <div id="adminMobileSidebar" class="hidden md:hidden fixed left-0 top-16 h-[calc(100vh-4rem-1.5rem)] w-64 bg-white shadow-lg z-50 overflow-y-scroll overscroll-contain border-r border-gray-200 sidebar-scroll" style="scrollbar-width: thin; scrollbar-color: #cbd5e0 #f7fafc;">
-    <div class="p-3 pb-8">
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-semibold text-gray-800">Menu</h2>
-            <button id="closeAdminMobileSidebar" class="p-2 rounded hover:bg-gray-100">
-                <i class="fas fa-times text-sm"></i>
-            </button>
+    <div class="px-3 pt-3 pb-3 h-full overflow-y-auto">
+        <!-- Profil administrateur mobile -->
+        <div class="text-center mb-3">
+            <div class="w-12 h-12 bg-gradient-to-r from-red-600 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
+                <i class="fas fa-user-shield text-white text-sm"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 text-xs tracking-tight"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></h3>
+            <p class="text-xs text-gray-500">Administrateur</p>
         </div>
-        <nav class="space-y-1 text-xs">
-            <a href="dashboard.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('dashboard', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-tachometer-alt w-4 <?php echo isActivePage('dashboard', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Dashboard</span>
+        <!-- Navigation mobile -->
+        <nav class="space-y-1 mb-0">
+            <a href="dashboard.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('dashboard', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-tachometer-alt mr-2.5 w-4 <?php echo isActivePage('dashboard', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Tableau de bord
             </a>
-            <a href="users.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('users', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-users w-4 <?php echo isActivePage('users', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Utilisateurs</span>
+            <a href="users.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('users', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-users mr-2.5 w-4 <?php echo isActivePage('users', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Utilisateurs
             </a>
-            <a href="courses.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('courses', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-graduation-cap w-4 <?php echo isActivePage('courses', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Cours</span>
+            <a href="courses.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('courses', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-graduation-cap mr-2.5 w-4 <?php echo isActivePage('courses', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Cours
             </a>
-            <a href="resources.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('resources', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-book w-4 <?php echo isActivePage('resources', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Ressources</span>
+            <a href="resources.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('resources', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-book mr-2.5 w-4 <?php echo isActivePage('resources', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Ressources
             </a>
-            <a href="certifications.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('certifications', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-certificate w-4 <?php echo isActivePage('certifications', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Gestion Certifications</span>
+            <a href="certifications.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('certifications', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-certificate mr-2.5 w-4 <?php echo isActivePage('certifications', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Gestion Certifications
             </a>
-            <a href="forum.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('forum', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-comments w-4 <?php echo isActivePage('forum', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Modération Forum</span>
+            <a href="forum.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('forum', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-comments mr-2.5 w-4 <?php echo isActivePage('forum', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Modération Forum
             </a>
-            <a href="settings.php" class="group flex items-center space-x-2.5 p-2.5 rounded-lg transition-all duration-200 <?php echo isActivePage('settings', $current_page, $current_path) ? $active_classes : $inactive_classes; ?>">
-                <i class="fas fa-cog w-4 <?php echo isActivePage('settings', $current_page, $current_path) ? $icon_active_classes : $icon_inactive_classes; ?>"></i>
-                <span>Paramètres</span>
-            </a>
-            <div class="my-4 border-t border-gray-200"></div>
-            <a href="../index.php" class="flex items-center space-x-2.5 p-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 text-xs">
-                <i class="fas fa-arrow-left w-4"></i>
-                <span>Retour au site</span>
+            <a href="settings.php" class="group flex items-center px-3 py-2 rounded-lg text-sm <?php echo isActivePage('settings', $current_page, $current_path) ? 'text-red-600 bg-red-50 ring-1 ring-red-100 font-medium' : 'text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors'; ?>">
+                <i class="fas fa-cog mr-2.5 w-4 <?php echo isActivePage('settings', $current_page, $current_path) ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'; ?>"></i>
+                Paramètres
             </a>
         </nav>
+
+        <!-- Actions rapides mobile -->
+        <div class="mt-6 space-y-2">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Actions</div>
+            <a href="users.php" class="flex items-center px-3 py-2 text-xs text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <i class="fas fa-user-plus mr-2 w-3"></i>
+                Ajouter un utilisateur
+            </a>
+            <a href="settings.php" class="flex items-center px-3 py-2 text-xs text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <i class="fas fa-cog mr-2 w-3"></i>
+                Configuration système
+            </a>
+        </div>
+        
+        <!-- Lien de retour mobile -->
+        <div class="mt-6">
+            <a href="../index.php" class="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-lg">
+                <i class="fas fa-arrow-left mr-2 w-4"></i>
+                <span>Retour au site</span>
+            </a>
+        </div>
     </div>
 </div>
 

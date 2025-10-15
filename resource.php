@@ -92,6 +92,41 @@ if ($isLoggedIn) {
 }
 
 $similarResources = getSimilarResources($resourceId, $resource['category']);
+
+// Récupérer les vidéos de la série pour la table des matières
+function getSeriesEpisodes($resourceId) {
+    $pdo = getDB();
+    
+    // Récupérer la série de la vidéo actuelle
+    $stmt = $pdo->prepare("
+        SELECT file_url FROM resources WHERE id = ?
+    ");
+    $stmt->execute([$resourceId]);
+    $currentResource = $stmt->fetch();
+    
+    if (!$currentResource) return [];
+    
+    $fileUrl = $currentResource['file_url'];
+    
+    // Déterminer la série selon le chemin
+    if (strpos($fileUrl, 'python pour tous') !== false) {
+        // Récupérer toutes les vidéos Python pour tous
+        $stmt = $pdo->prepare("
+            SELECT id, title, file_url, duration
+            FROM resources 
+            WHERE file_url LIKE '%python pour tous%' 
+            AND type = 'video' 
+            AND is_active = 1
+            ORDER BY title ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+    
+    return [];
+}
+
+$seriesEpisodes = getSeriesEpisodes($resourceId);
 ?>
 
 <!DOCTYPE html>
@@ -125,13 +160,8 @@ $similarResources = getSimilarResources($resourceId, $resource['category']);
                     <i class="fas fa-user-graduate text-white text-lg"></i>
                 </div>
                 <h3 class="font-semibold text-gray-900 text-sm tracking-tight"><?php echo htmlspecialchars($user['full_name']); ?></h3>
-                <p class="text-xs text-gray-500">Étudiant IA</p>
-                <div class="mt-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800">
-                        <i class="fas fa-star mr-1"></i>
-                        Niveau <?php echo $user['level'] ?? 'Débutant'; ?>
-                    </span>
-                </div>
+                <p class="text-xs text-gray-500">Étudiant</p>
+                
             </div>
 
             <!-- Navigation -->
@@ -464,6 +494,45 @@ function example() {
                     </div>
                 </div>
             </div>
+
+            <!-- Table des matières -->
+            <?php if (!empty($seriesEpisodes)): ?>
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Table des matières</h2>
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <?php foreach ($seriesEpisodes as $index => $episode): ?>
+                            <div class="flex items-center space-x-4 p-3 rounded-lg <?php echo $episode['id'] == $resourceId ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'; ?>">
+                                <div class="w-8 h-8 <?php echo $episode['id'] == $resourceId ? 'bg-blue-600' : 'bg-gray-400'; ?> text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                                    <?php echo $index + 1; ?>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-sm font-medium text-gray-900 <?php echo $episode['id'] == $resourceId ? 'text-blue-700' : ''; ?>">
+                                        <?php echo htmlspecialchars($episode['title']); ?>
+                                    </h3>
+                                    <?php if (!empty($episode['duration'])): ?>
+                                    <p class="text-xs text-gray-500 mt-1"><?php echo $episode['duration']; ?></p>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if ($episode['id'] == $resourceId): ?>
+                                <div class="flex items-center text-blue-600">
+                                    <i class="fas fa-play-circle mr-1"></i>
+                                    <span class="text-sm font-medium">En cours</span>
+                                </div>
+                                <?php else: ?>
+                                <a href="resource.php?id=<?php echo $episode['id']; ?>" 
+                                   class="text-gray-400 hover:text-blue-600 transition-colors">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- Ressources similaires -->
             <?php if (!empty($similarResources)): ?>

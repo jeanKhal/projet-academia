@@ -1,9 +1,15 @@
 <?php
 session_start();
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Vérifier si l'utilisateur est connecté et est admin
-if (!isLoggedIn() || $_SESSION['user_role'] !== 'admin') {
+if (!isLoggedIn()) {
+    header('Location: ../login.php');
+    exit();
+}
+
+$user = getUserById($_SESSION['user_id']);
+if ($user['role'] !== 'admin') {
     header('Location: ../login.php');
     exit();
 }
@@ -62,6 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlashMessage('success', 'Cache nettoyé avec succès.');
                 break;
                 
+            case 'clear_logs':
+                // Vider les logs système
+                require_once __DIR__ . '/../includes/logger.php';
+                $logger = getLogger();
+                $logger->clearLogs();
+                logAdminAction($_SESSION['user_id'], $_SESSION['user_name'], 'Vider les logs système');
+                setFlashMessage('success', 'Logs système vidés avec succès.');
+                break;
+                
             case 'view_logs':
                 // Afficher les logs système
                 $logFile = __DIR__ . '/../logs/system.log';
@@ -81,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Récupérer les paramètres actuels
 $site_name = getSetting('site_name', 'Académie IA');
-$site_description = getSetting('site_description', 'Plateforme d\'apprentissage en intelligence artificielle');
+$site_description = getSetting('site_description', 'Plateforme d\'apprentissage multidisciplinaire pour tous les étudiants');
 $contact_email = getSetting('contact_email', 'contact@academy.com');
 
 $smtp_host = getSetting('smtp_host', '');
@@ -106,9 +121,14 @@ $flash_message = getFlashMessage();
 </head>
 <body class="bg-gray-100 overflow-x-hidden">
     <?php include 'includes/header.php'; ?>
+    
+    <div class="flex">
     <?php include 'includes/sidebar.php'; ?>
 
-    <div class="flex-1 p-4 md:p-8 mt-16 pb-16">
+        <!-- Séparateur visuel -->
+        <div class="hidden md:block w-px bg-gradient-to-b from-gray-200 to-gray-300 mt-16 h-[calc(100vh-4rem-1.5rem)] ml-64"></div>
+        
+        <div class="flex-1 p-4 md:p-6 mt-16 pb-16 bg-white rounded-l-2xl shadow-sm border-l-2 border-gray-100 min-h-[calc(100vh-4rem-1.5rem)]" style="margin-left: 6px;">
         <div class="mb-8">
             <div class="flex justify-between items-center">
                 <div>
@@ -312,6 +332,7 @@ $flash_message = getFlashMessage();
                             </button>
                         </form>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -319,35 +340,166 @@ $flash_message = getFlashMessage();
 
     <!-- Modal pour afficher les logs -->
     <?php if (isset($_SESSION['system_logs'])): ?>
-    <div id="logsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900">
-                    <i class="fas fa-file-alt mr-2 text-purple-600"></i>
-                    Logs Système
-                </h3>
-                <button onclick="closeLogsModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
+    <div id="logsModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-start justify-center z-50" style="padding-top: 2rem; padding-bottom: 2rem;">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden border border-gray-200">
+            <!-- Header compact -->
+            <div class="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-lg">
+                            <i class="fas fa-chart-line text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Logs Système</h3>
+                            <p class="text-xs text-gray-600">Surveillance des activités</p>
+                        </div>
+                    </div>
+                    <button onclick="closeLogsModal()" class="group flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-red-100 rounded-lg transition-all duration-200 hover:scale-105">
+                        <i class="fas fa-times text-gray-500 group-hover:text-red-600 text-sm"></i>
                 </button>
+                </div>
             </div>
-            <div class="p-6 overflow-y-auto max-h-[60vh]">
-                <?php if (!empty($_SESSION['system_logs'])): ?>
-                    <div class="bg-gray-900 text-green-400 font-mono text-sm rounded-lg p-4">
-                        <?php foreach ($_SESSION['system_logs'] as $log): ?>
-                            <div class="mb-1"><?php echo htmlspecialchars($log); ?></div>
+            <!-- Contenu principal -->
+            <div class="p-4 overflow-y-auto max-h-[50vh]">
+                <?php 
+                // Chargement simplifié des logs pour améliorer les performances
+                $logs = [];
+                $log_file = __DIR__ . '/../logs/system.log';
+                
+                if (file_exists($log_file)) {
+                    $log_lines = file($log_file, FILE_IGNORE_NEW_LINES);
+                    $logs = array_slice(array_reverse($log_lines), 0, 5); // Seulement 5 derniers logs
+                }
+                ?>
+                
+                <?php if (!empty($logs)): ?>
+                    <!-- Barre d'outils compacte -->
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-3">
+                            <h4 class="text-lg font-bold text-gray-900">Logs Récents</h4>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                                50 derniers
+                            </span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="refreshLogs()" class="group flex items-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 hover:scale-105">
+                                <i class="fas fa-sync-alt mr-1 group-hover:animate-spin"></i>
+                                Actualiser
+                            </button>
+                            <button onclick="clearLogs()" class="group flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 hover:scale-105">
+                                <i class="fas fa-trash mr-1"></i>
+                                Vider
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Zone des logs compacte -->
+                    <div class="bg-gray-900 rounded-lg p-4 shadow-inner">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            </div>
+                            <span class="text-gray-400 text-xs font-mono">Terminal</span>
+                        </div>
+                        
+                        <div class="bg-black rounded-lg p-3 max-h-60 overflow-y-auto font-mono text-xs">
+                            <?php foreach ($logs as $index => $log): ?>
+                                <div class="mb-2 p-2 rounded border-l-2 <?php 
+                                    if (strpos($log, 'ERROR') !== false) echo 'bg-red-900/20 border-red-500 text-red-300';
+                                    elseif (strpos($log, 'WARNING') !== false) echo 'bg-yellow-900/20 border-yellow-500 text-yellow-300';
+                                    elseif (strpos($log, 'INFO') !== false) echo 'bg-blue-900/20 border-blue-500 text-blue-300';
+                                    else echo 'bg-gray-800/20 border-gray-500 text-gray-300';
+                                ?>">
+                                    <div class="flex items-start space-x-2">
+                                        <span class="text-gray-500 text-xs mt-0.5"><?php echo $index + 1; ?></span>
+                                        <div class="flex-1">
+                                            <div class="text-xs text-gray-400 mb-0.5">
+                                                <?php 
+                                                $timestamp = substr($log, 1, 19);
+                                                echo htmlspecialchars($timestamp);
+                                                ?>
+                                            </div>
+                                            <div class="text-xs">
+                                                <?php 
+                                                // Mettre en évidence l'IP dans le log
+                                                $highlightedLog = preg_replace(
+                                                    '/(🌐 IP: )([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/',
+                                                    '<span class="bg-blue-600 text-white px-1 rounded text-xs font-mono">$1$2</span>',
+                                                    htmlspecialchars($log)
+                                                );
+                                                echo $highlightedLog;
+                                                ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                         <?php endforeach; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Légende compacte -->
+                    <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                        <h5 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-info-circle mr-1 text-blue-600 text-xs"></i>
+                            Types d'événements
+                        </h5>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
+                                <span class="text-xs text-gray-700">Connexions</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-green-600 rounded-full"></div>
+                                <span class="text-xs text-gray-700">Activités</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-yellow-600 rounded-full"></div>
+                                <span class="text-xs text-gray-700">Admin</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-red-600 rounded-full"></div>
+                                <span class="text-xs text-gray-700">Sécurité</span>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex items-center space-x-2 text-sm text-gray-800 bg-blue-50 p-3 rounded-lg">
+                                <i class="fas fa-globe text-blue-600 text-base"></i>
+                                <span class="font-medium"><strong class="text-blue-700">IPs enregistrées :</strong> <span class="text-gray-700">Adresses IP réelles des utilisateurs (même derrière proxy)</span></span>
+                            </div>
+                        </div>
                     </div>
                 <?php else: ?>
-                    <div class="text-center text-gray-500 py-8">
-                        <i class="fas fa-file-alt text-4xl mb-4"></i>
-                        <p>Aucun log système disponible</p>
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-file-alt text-2xl text-gray-400"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Aucun log disponible</h4>
+                        <p class="text-gray-600 mb-3 text-sm">Les logs apparaîtront après les activités</p>
+                        <button onclick="refreshLogs()" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-sync-alt mr-1"></i>
+                            Actualiser
+                        </button>
                     </div>
                 <?php endif; ?>
             </div>
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
-                <button onclick="closeLogsModal()" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+            <!-- Footer compact -->
+            <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+                <div class="flex items-center text-xs text-gray-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span>Mise à jour: <?php echo date('H:i:s'); ?></span>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="refreshLogs()" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-all duration-200">
+                        <i class="fas fa-sync-alt mr-1"></i>
+                        Actualiser
+                    </button>
+                    <button onclick="closeLogsModal()" class="flex items-center bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-all duration-200">
+                        <i class="fas fa-times mr-1"></i>
                     Fermer
                 </button>
+                </div>
             </div>
         </div>
     </div>
@@ -359,14 +511,88 @@ $flash_message = getFlashMessage();
 
     <script>
         function closeLogsModal() {
-            document.getElementById('logsModal').style.display = 'none';
+            const modal = document.getElementById('logsModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 200);
+            }
         }
+        
+        function refreshLogs() {
+            const refreshBtn = event.target.closest('button');
+            const icon = refreshBtn.querySelector('i');
+            
+            // Animation de rotation
+            icon.classList.add('animate-spin');
+            refreshBtn.disabled = true;
+            
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        }
+        
+        function clearLogs() {
+            // Modal de confirmation personnalisée
+            const confirmed = confirm('⚠️ ATTENTION\n\nÊtes-vous sûr de vouloir vider tous les logs système ?\n\nCette action est irréversible et supprimera définitivement tous les enregistrements d\'activité.\n\nCliquez sur OK pour confirmer.');
+            
+            if (confirmed) {
+                const clearBtn = event.target.closest('button');
+                const icon = clearBtn.querySelector('i');
+                
+                // Animation de suppression
+                icon.classList.remove('fa-trash');
+                icon.classList.add('fa-spinner', 'animate-spin');
+                clearBtn.disabled = true;
+                
+                // Créer un formulaire pour envoyer la requête de suppression
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'clear_logs';
+                input.value = '1';
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // Animation d'ouverture de la modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('logsModal');
+            if (modal && modal.style.display !== 'none') {
+                modal.style.opacity = '0';
+                modal.style.transform = 'scale(0.95)';
+                modal.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    modal.style.transform = 'scale(1)';
+                }, 10);
+            }
+        });
         
         // Fermer la modal en cliquant à l'extérieur
         document.addEventListener('click', function(event) {
             const modal = document.getElementById('logsModal');
             if (event.target === modal) {
                 closeLogsModal();
+            }
+        });
+        
+        // Fermer avec la touche Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('logsModal');
+                if (modal && modal.style.display !== 'none') {
+                    closeLogsModal();
+                }
             }
         });
     </script>
